@@ -1,13 +1,13 @@
 require 'spec_helper'
 
 module Roper
-  describe AuthorizationController do
+  describe AccessTokenController do
     routes { Roper::Engine.routes }
 
-    describe "POST /oauth/authorize" do
-      context "response_type parameter is missing" do
+    describe "POST /oauth/token" do
+      context "grant_type parameter is missing" do
         before :each do
-          post :authorize, {}
+          post :token, {}
         end
 
         it "returns a 400 status code" do
@@ -19,17 +19,17 @@ module Roper
         end
       end
 
-      context "response_type parameter is unsupported" do
+      context "grant_type parameter is unsupported" do
         before :each do
-          post :authorize, {:response_type => "foo"}
+          post :token, {:grant_type => "foo"}
         end
 
         it "returns a 400 status code" do
           expect(response.code).to eq("400")
         end
 
-        it "returns an unsupported_response_type error response" do
-          expect(response.body).to eq("{\"error\":\"unsupported_response_type\"}")
+        it "returns an unsupported_grant_type error response" do
+          expect(response.body).to eq("{\"error\":\"unsupported_grant_type\"}")
         end
       end
     end

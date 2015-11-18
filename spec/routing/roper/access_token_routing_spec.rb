@@ -5,8 +5,8 @@ module Roper
     describe "routing" do
       routes { Roper::Engine.routes }
 
-      it "routes to #authorize" do
-        post("/authorize").should route_to("roper/authorization#authorize")
+      it "routes to #token" do
+        post("/token").should route_to("roper/access_token#token")
       end
     end
   end
