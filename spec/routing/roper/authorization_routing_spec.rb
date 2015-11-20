@@ -6,7 +6,7 @@ module Roper
       routes { Roper::Engine.routes }
 
       it "routes to #authorize" do
-        post("/authorize").should route_to("roper/authorization#authorize")
+        get("/authorize").should route_to("roper/authorization#authorize")
       end
     end
   end

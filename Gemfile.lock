@@ -2,7 +2,7 @@ PATH
   remote: .
   specs:
     roper (0.0.1)
-      rails (~> 4.0.3)
+      rails (>= 4)
 
 GEM
   remote: https://rubygems.org/
@@ -97,3 +97,6 @@ DEPENDENCIES
   roper!
   rspec-rails
   sqlite3
+
+BUNDLED WITH
+   1.10.6
