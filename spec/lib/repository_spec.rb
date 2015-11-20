@@ -1,8 +1,8 @@
 require "spec_helper"
 
 describe Roper::Repository do
-  before :each do
-    Roper::Repository.repositories.clear
+  after :each do
+    Roper::Repository.repositories.delete(:repo1)
   end
 
   let(:repo1) { Object.new }
