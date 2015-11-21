@@ -1,5 +1,5 @@
 module Roper
-  class ApplicationController < ActionController::Base
+  class ApplicationController < ::ApplicationController
     include ApplicationHelper
   end
 end
