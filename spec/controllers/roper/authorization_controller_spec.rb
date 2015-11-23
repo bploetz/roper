@@ -162,6 +162,12 @@ module Roper
         post :approve_authorization, {:redirect_uri => "http://www.foo.com", :client_id => client.client_id}
         expect(response).to redirect_to("http://www.foo.com?code=abc123")
       end
+
+      it "includes state if present in original request" do
+        Roper::ActiveRecord::AuthorizationCode.any_instance.stub(:code).and_return("abc123")
+        post :approve_authorization, {:redirect_uri => "http://www.foo.com", :client_id => client.client_id, :state => "foo"}
+        expect(response).to redirect_to("http://www.foo.com?code=abc123&state=foo")
+      end
     end
   end
 end
