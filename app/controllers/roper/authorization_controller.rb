@@ -8,12 +8,17 @@ module Roper
     # GET /authorize
     # https://tools.ietf.org/html/rfc6749#section-3.1
     def authorize
+      @state = params[:state]
       @response_type = params[:response_type]
-      render :json => create_error("invalid_request"), :status => 400 and return if !@response_type
+      render :json => create_error("invalid_request", "response_type is required", nil, @state), :status => 400 and return if !@response_type
       @client_id = params[:client_id]
-      render :json => create_error("invalid_request"), :status => 400 and return if !@client_id
+      render :json => create_error("invalid_request", "client_id is required", nil, @state), :status => 400 and return if !@client_id
       @client = Roper::Repository.for(:client).find_by_client_id(@client_id)
       render :json => create_error("invalid_request"), :status => 400 and return if !@client
+      # TODO: Add support for configuring the redirect_uri on the client so it doesn't have
+      # to be passed as a parameter. For now, treat it as required in the request.
+      @redirect_uri = params[:redirect_uri]
+      render :json => create_error("invalid_request", "redirect_uri is required", nil, @state), :status => 400 and return if !@redirect_uri
 
       case @response_type
       when 'code'
@@ -23,11 +28,28 @@ module Roper
         # https://tools.ietf.org/html/rfc6749#section-4.2
         process_implicit_grant
       else
-        render :json => create_error("unsupported_response_type"), :status => 400 and return
+        render :json => create_error("unsupported_response_type", nil, nil, @state), :status => 400 and return
       end
     end
 
     def approve_authorization
+      @state = params[:state]
+      @client_id = params[:client_id]
+      render :json => create_error("invalid_request", "client_id is required", nil, @state), :status => 400 and return if !@client_id
+      @client = Roper::Repository.for(:client).find_by_client_id(@client_id)
+      render :json => create_error("invalid_request"), :status => 400 and return if !@client
+      # TODO: Add support for configuring the redirect_uri on the client so it doesn't have
+      # to be passed as a parameter. For now, treat it as required in the request.
+      @redirect_uri = params[:redirect_uri]
+      render :json => create_error("invalid_request", "redirect_uri is required", nil, @state), :status => 400 and return if !@redirect_uri
+
+      @authorization_code = Roper::Repository.for(:authorization_code).new(:client_id => @client_id,
+                                                                           :redirect_uri => @redirect_uri,
+                                                                           :expires_at => (DateTime.now + 5.minutes))
+      Roper::Repository.for(:authorization_code).save(@authorization_code)
+      augmented_redirect_uri = "#{params[:redirect_uri]}?code=#{@authorization_code.code}"
+      augmented_redirect_uri << "&state=#{params[:state]}" if @state && !@state.blank?
+      redirect_to augmented_redirect_uri
     end
 
     def deny_authorization
@@ -43,7 +65,6 @@ module Roper
     def process_authorization_code_grant
       @redirect_uri = params[:redirect_uri]
       @scope = params[:scope]
-      @state = params[:state]
       if @scope
         if @scope.include?(" ")
           @scopes = @scope.split(" ")

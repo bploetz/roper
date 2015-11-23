@@ -3,6 +3,7 @@ PATH
   specs:
     roper (0.0.1)
       rails (>= 4)
+      uuidtools (~> 2.1)
 
 GEM
   remote: https://rubygems.org/
@@ -88,6 +89,7 @@ GEM
     thor (0.19.1)
     thread_safe (0.3.5)
     tzinfo (0.3.45)
+    uuidtools (2.1.5)
 
 PLATFORMS
   ruby

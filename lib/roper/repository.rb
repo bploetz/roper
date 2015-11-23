@@ -18,6 +18,7 @@ module Roper
       when :active_record
         require 'roper/repository/active_record'
         Repository.register(:client, ActiveRecord::ClientRepository.new)
+        Repository.register(:authorization_code, ActiveRecord::AuthorizationCodeRepository.new)
         Repository.register(:access_token, ActiveRecord::AccessTokenRepository.new)
       end
     end

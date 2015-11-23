@@ -14,6 +14,10 @@ module Roper
       it "serializes error_uri if given" do
         expect(create_error("foo", "bar", "baz")).to eq({:error => "foo", :error_description => "bar", :error_uri => "baz"})
       end
+
+      it "serializes state if given" do
+        expect(create_error("foo", nil, nil, "bar")).to eq({:error => "foo", :state => "bar"})
+      end
     end
   end
 end

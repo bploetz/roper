@@ -3,15 +3,14 @@ require 'digest/sha1'
 
 module Roper
   module ActiveRecord
-    class ClientRepository
+    class AuthorizationCodeRepository
       def model_class
-        ActiveRecord::Client
+        ActiveRecord::AuthorizationCode
       end
 
       def new(attributes = {})
         instance = model_class.new(attributes)
-        instance.client_id = UUIDTools::UUID.random_create.to_s
-        instance.client_secret = Digest::SHA1.hexdigest(UUIDTools::UUID.random_create.to_s)
+        instance.code = Digest::SHA1.hexdigest(UUIDTools::UUID.random_create.to_s)
         instance
       end
 
@@ -20,8 +19,8 @@ module Roper
         return object
       end
 
-      def find_by_client_id(client_id)
-        model_class.find_by(:client_id => client_id)
+      def find_by_code(code)
+        model_class.find_by(:code => code)
       end
     end
   end
