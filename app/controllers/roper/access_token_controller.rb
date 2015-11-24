@@ -2,6 +2,8 @@ require_dependency "roper/application_controller"
 
 module Roper
   class AccessTokenController < ApplicationController
+    before_action :authenticate_client
+
     # POST /token
     # https://tools.ietf.org/html/rfc6749#section-3.2
     def token
@@ -25,6 +27,18 @@ module Roper
 
 
     private
+
+    def authenticate_client
+      auth_header = request.authorization
+      if !auth_header.blank? && auth_header.start_with?("Basic: ")
+        client_id_client_secret = ActionController::HttpAuthentication::Basic::user_name_and_password(request)
+        client = Roper::Repository.for(:client).find_by_client_id(client_id_client_secret[0])
+        head :unauthorized and return if !client
+        head :unauthorized and return if client.client_secret != client_id_client_secret[1]
+      else
+        head :unauthorized and return
+      end
+    end
 
     def process_resource_owner_password_credentials_grant
       # TODO

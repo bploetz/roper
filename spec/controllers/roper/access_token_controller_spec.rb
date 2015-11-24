@@ -4,6 +4,33 @@ module Roper
   describe AccessTokenController do
     routes { Roper::Engine.routes }
 
+    let(:client) { FactoryGirl.create(:active_record_client) }
+
+    describe "authenticate_client filter" do
+      it "returns a 401 for missing basic auth credentials" do
+        post :token, {}
+        expect(response.code).to eq("401")
+      end
+
+      it "returns a 401 for invalid basic auth credentials" do
+        @request.env["HTTP_AUTHORIZATION"] = "Basic: #{::Base64.strict_encode64("foo:bar")}"
+        post :token, {}
+        expect(response.code).to eq("401")
+      end
+
+      it "returns a 401 if client_secret doesn't match" do
+        @request.env["HTTP_AUTHORIZATION"] = "Basic: #{::Base64.strict_encode64(client.client_id + ":bar")}"
+        post :token, {}
+        expect(response.code).to eq("401")
+      end
+
+      it "allows clients with valid basic auth credentials" do
+        @request.env["HTTP_AUTHORIZATION"] = "Basic: #{::Base64.strict_encode64(client.client_id + ":" + client.client_secret)}"
+        post :token, {}
+        expect(response.code).to eq("400")
+      end
+    end
+
     describe "POST /oauth/token" do
       context "grant_type parameter is missing" do
         before :each do
