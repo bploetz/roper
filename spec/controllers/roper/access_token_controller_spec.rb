@@ -32,6 +32,10 @@ module Roper
     end
 
     describe "POST /oauth/token" do
+      before :each do
+        subject.stub(:authenticate_client)
+      end
+
       context "grant_type parameter is missing" do
         before :each do
           post :token, {}
