@@ -5,6 +5,7 @@ module Roper
     routes { Roper::Engine.routes }
 
     let(:client) { FactoryGirl.create(:active_record_client) }
+    let(:client_with_redirect) { FactoryGirl.create(:active_record_client, :client_id => "with_redirect", :redirect_uri => 'http://www.bar.com') }
 
     describe "check_logged_in filter" do
       it "calls the configured signed_in_+method" do
@@ -15,7 +16,7 @@ module Roper
 
     describe "GET /oauth/authorize" do
       before :each do
-        controller.stub(:check_logged_in).and_return(true)
+        controller.stub(:validate_logged_in).and_return(true)
       end
 
       context "response_type parameter is missing" do
@@ -52,20 +53,29 @@ module Roper
         end
       end
 
-      context "redirect_uri parameter is missing" do
-        it "returns a 400 status code" do
-          get :authorize, {:response_type => "code", :client_id => client.client_id}
-          expect(response.code).to eq("400")
+      context "client has a configured redirect_uri" do
+        it "does not return a 400 status code" do
+          get :authorize, {:response_type => "code", :client_id => client_with_redirect.client_id}
+          expect(response.code).to eq("200")
         end
+      end
 
-        it "returns an invalid_request error response" do
-          get :authorize, {:response_type => "code", :client_id => client.client_id}
-          expect(response.body).to eq("{\"error\":\"invalid_request\",\"error_description\":\"redirect_uri is required\"}")
-        end
+      context "client does not have a configured redirect_uri" do
+        context "redirect_uri parameter is missing" do
+          it "returns a 400 status code" do
+            get :authorize, {:response_type => "code", :client_id => client.client_id}
+            expect(response.code).to eq("400")
+          end
 
-        it "includes state in the error if sent in the request" do
-          get :authorize, {:response_type => "code", :client_id => client.client_id, :state => "foo"}
-          expect(response.body).to eq("{\"error\":\"invalid_request\",\"error_description\":\"redirect_uri is required\",\"state\":\"foo\"}")
+          it "returns an invalid_request error response" do
+            get :authorize, {:response_type => "code", :client_id => client.client_id}
+            expect(response.body).to eq("{\"error\":\"invalid_request\",\"error_description\":\"redirect_uri is required\"}")
+          end
+
+          it "includes state in the error if sent in the request" do
+            get :authorize, {:response_type => "code", :client_id => client.client_id, :state => "foo"}
+            expect(response.body).to eq("{\"error\":\"invalid_request\",\"error_description\":\"redirect_uri is required\",\"state\":\"foo\"}")
+          end
         end
       end
 
@@ -99,8 +109,22 @@ module Roper
           expect(response).to render_template("authorize")
         end
 
-        it "assigns @redirect_uri" do
-          expect(assigns(:redirect_uri)).to eq("http://www.foo.com")
+        context "client has a configured redirect_uri" do
+          it "assigns @redirect_uri to configured redirect_uri" do
+            get :authorize, {:response_type => "code", :client_id => client_with_redirect.client_id, :scope => "read write", :state => "abc123"}
+            expect(assigns(:redirect_uri)).to eq("http://www.bar.com")
+          end
+
+          it "assigns @redirect_uri to configured redirect_uri and ignores any redirect_uri in the request" do
+            get :authorize, {:response_type => "code", :client_id => client_with_redirect.client_id, :redirect_uri => "http://www.foo.com", :scope => "read write", :state => "abc123"}
+            expect(assigns(:redirect_uri)).to eq("http://www.bar.com")
+          end
+        end
+
+        context "client has a configured redirect_uri" do
+          it "assigns @redirect_uri to the redirect_uri in the request" do
+            expect(assigns(:redirect_uri)).to eq("http://www.foo.com")
+          end
         end
 
         it "assigns @scope" do
@@ -115,7 +139,7 @@ module Roper
 
     describe "POST /oauth/approve_authorization" do
       before :each do
-        controller.stub(:check_logged_in).and_return(true)
+        controller.stub(:validate_logged_in).and_return(true)
       end
 
       context "client_id parameter is missing" do
