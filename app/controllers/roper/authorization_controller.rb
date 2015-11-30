@@ -36,6 +36,8 @@ module Roper
 
     def deny_authorization
       # TODO
+      # Should return a "access_denied" error response
+      # https://tools.ietf.org/html/rfc6749#section-4.1.2.1
     end
 
 
@@ -50,12 +52,22 @@ module Roper
       @client = Roper::Repository.for(:client).find_by_client_id(@client_id)
       render :json => create_error("invalid_request"), :status => 400 and return if !@client
 
-      if @client.redirect_uri
-        @redirect_uri = @client.redirect_uri
-      else
-        @redirect_uri = params[:redirect_uri]
+      # https://tools.ietf.org/html/rfc6749#section-3.1.2.3
+      if @client.client_redirect_uris.size == 1
+        if params[:redirect_uri]
+          if @client.valid_redirect_uri?(params[:redirect_uri])
+            @redirect_uri = params[:redirect_uri]
+          end
+        else
+          @redirect_uri = @client.client_redirect_uris[0].uri
+        end
+      elsif @client.client_redirect_uris.size > 1
+        render :json => create_error("invalid_request", "redirect_uri is required", nil, @state), :status => 400 and return if !params[:redirect_uri]
+        if @client.valid_redirect_uri?(params[:redirect_uri])
+          @redirect_uri = params[:redirect_uri]
+        end
       end
-      render :json => create_error("invalid_request", "redirect_uri is required", nil, @state), :status => 400 and return if !@redirect_uri
+      render :json => create_error("invalid_request", "invalid redirect_uri", nil, @state), :status => 400 and return if !@redirect_uri
 
       @scope = params[:scope]
       if @scope
