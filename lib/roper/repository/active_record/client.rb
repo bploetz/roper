@@ -3,6 +3,9 @@ module Roper
     class Client < ::ActiveRecord::Base
       self.table_name = "oauth_clients"
 
+      validates_uniqueness_of :client_id, :message => "client_id has already been taken"
+      validate :credentials_changed, :on => :update
+
       has_many :client_redirect_uris
 
       def valid_redirect_uri?(uri)
@@ -18,6 +21,14 @@ module Roper
         end
 
         false
+      end
+
+
+      private
+
+      def credentials_changed
+        errors.add(:client_id, "cannot update client_id") if self.client_id_changed?
+        errors.add(:client_secret, "cannot update client_secret") if self.client_secret_changed?
       end
     end
   end
