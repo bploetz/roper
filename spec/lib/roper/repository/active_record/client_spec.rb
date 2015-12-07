@@ -28,6 +28,17 @@ describe Roper::ActiveRecord::Client do
     end
   end
 
+  context "callbacks" do
+    let(:client) { FactoryGirl.create(:active_record_client, :client_secret => "foo") }
+
+    context "before_save" do
+      it "bcrypts the client_secret" do
+        expect(client.client_secret).not_to eq("foo")
+        expect(BCrypt::Password.new(client.client_secret) == "foo").to eq(true)
+      end
+    end
+  end
+
   context "#valid_redirect_uri?" do
     let(:client) do
       client = FactoryGirl.build(:active_record_client)

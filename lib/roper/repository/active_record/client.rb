@@ -1,3 +1,5 @@
+require 'bcrypt'
+
 module Roper
   module ActiveRecord
     class Client < ::ActiveRecord::Base
@@ -7,6 +9,9 @@ module Roper
       validate :credentials_changed, :on => :update
 
       has_many :client_redirect_uris
+
+      before_save :hash_client_secret, if: :client_secret_changed?
+
 
       def valid_redirect_uri?(uri)
         begin
@@ -29,6 +34,10 @@ module Roper
       def credentials_changed
         errors.add(:client_id, "cannot update client_id") if self.client_id_changed?
         errors.add(:client_secret, "cannot update client_secret") if self.client_secret_changed?
+      end
+
+      def hash_client_secret
+        self.client_secret = BCrypt::Password.create(self.client_secret, :cost => 10).to_s
       end
     end
   end

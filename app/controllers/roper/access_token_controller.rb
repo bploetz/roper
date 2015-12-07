@@ -34,7 +34,7 @@ module Roper
         client_id_client_secret = ActionController::HttpAuthentication::Basic::user_name_and_password(request)
         client = Roper::Repository.for(:client).find_by_client_id(client_id_client_secret[0])
         head :unauthorized and return if !client
-        head :unauthorized and return if client.client_secret != client_id_client_secret[1]
+        head :unauthorized and return if BCrypt::Password.new(client.client_secret) != client_id_client_secret[1]
       else
         head :unauthorized and return
       end

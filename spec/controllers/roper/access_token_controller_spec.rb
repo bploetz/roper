@@ -25,7 +25,7 @@ module Roper
       end
 
       it "allows clients with valid basic auth credentials" do
-        @request.env["HTTP_AUTHORIZATION"] = "Basic: #{::Base64.strict_encode64(client.client_id + ":" + client.client_secret)}"
+        @request.env["HTTP_AUTHORIZATION"] = "Basic: #{::Base64.strict_encode64(client.client_id + ":test")}"
         post :token, {}
         expect(response.code).to eq("400")
       end
