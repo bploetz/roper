@@ -179,6 +179,15 @@ module Roper
           expect(assigns(:redirect_uri)).to eq("http://www.foo.com")
         end
 
+        it "does not assign @request_redirect_uri if redirect_uri is not present in the request" do
+          expect(assigns(:request_redirect_uri)).to eq(nil)
+        end
+
+        it "assigns @request_redirect_uri if redirect_uri is present in the request" do
+          get :authorize, {:response_type => "code", :client_id => client_with_redirect.client_id, :scope => "read write", :state => "abc123", :redirect_uri => client_with_redirect.client_redirect_uris[0].uri}
+          expect(assigns(:request_redirect_uri)).to eq(client_with_redirect.client_redirect_uris[0].uri)
+        end
+
         it "assigns @scope" do
           expect(assigns(:scope)).to eq("read write")
         end
@@ -192,6 +201,11 @@ module Roper
     describe "POST /oauth/approve_authorization" do
       before :each do
         controller.stub(:validate_logged_in).and_return(true)
+      end
+
+      it "creates an authorization code" do
+        post :approve_authorization, {:client_id => client_with_redirect.client_id}
+        expect(Roper::Repository.for(:authorization_code).model_class.count).to eq(1)
       end
 
       it "returns a 302 status code" do

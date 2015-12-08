@@ -16,6 +16,7 @@
   <%= hidden_field_tag :response_type, @response_type %>
   <%= hidden_field_tag :client_id, @client.client_id %>
   <%= hidden_field_tag :redirect_uri, @redirect_uri %>
+  <%= hidden_field_tag :request_redirect_uri, @request_redirect_uri %>
   <%= hidden_field_tag :scope, @scope %>
   <%= hidden_field_tag :state, @state %>
   <%= submit_tag t('oauth.authorize.approve') %>
@@ -25,6 +26,7 @@
   <%= hidden_field_tag :response_type, @response_type %>
   <%= hidden_field_tag :client_id, @client.client_id %>
   <%= hidden_field_tag :redirect_uri, @redirect_uri %>
+  <%= hidden_field_tag :request_redirect_uri, @request_redirect_uri %>
   <%= hidden_field_tag :scope, @scope %>
   <%= hidden_field_tag :state, @state %>
   <%= submit_tag t('oauth.authorize.deny') %>

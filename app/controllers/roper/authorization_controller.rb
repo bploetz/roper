@@ -25,10 +25,11 @@ module Roper
     end
 
     def approve_authorization
-      @authorization_code = Roper::Repository.for(:authorization_code).new(:client_id => @client_id,
-                                                                           :redirect_uri => @redirect_uri,
-                                                                           :expires_at => (DateTime.now + 5.minutes))
-      Roper::Repository.for(:authorization_code).save(@authorization_code)
+      auth_code_repo = Roper::Repository.for(:authorization_code)
+      @authorization_code = auth_code_repo.new(:client_id => @client_id,
+                                               :redirect_uri => @request_redirect_uri,
+                                               :expires_at => (DateTime.now + 5.minutes))
+      auth_code_repo.save(@authorization_code)
       augmented_redirect_uri = "#{params[:redirect_uri]}?code=#{@authorization_code.code}"
       augmented_redirect_uri << "&state=#{params[:state]}" if @state && !@state.blank?
       redirect_to augmented_redirect_uri
@@ -56,7 +57,7 @@ module Roper
       if @client.client_redirect_uris.size == 1
         if params[:redirect_uri]
           if @client.valid_redirect_uri?(params[:redirect_uri])
-            @redirect_uri = params[:redirect_uri]
+            @redirect_uri = @request_redirect_uri = params[:redirect_uri]
           end
         else
           @redirect_uri = @client.client_redirect_uris[0].uri
@@ -64,7 +65,7 @@ module Roper
       elsif @client.client_redirect_uris.size > 1
         render :json => create_error("invalid_request", "redirect_uri is required", nil, @state), :status => 400 and return if !params[:redirect_uri]
         if @client.valid_redirect_uri?(params[:redirect_uri])
-          @redirect_uri = params[:redirect_uri]
+          @redirect_uri = @request_redirect_uri = params[:redirect_uri]
         end
       end
       render :json => create_error("invalid_request", "invalid redirect_uri", nil, @state), :status => 400 and return if !@redirect_uri
