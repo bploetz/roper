@@ -53,30 +53,17 @@ module Roper
     def process_authorization_code_grant
       code = params[:code]
       render :json => create_error("invalid_request"), :status => 400 and return if !code
+      redirect_uri = params[:redirect_uri]
 
-      authorization_code = Roper::Repository.for(:authorization_code).find_by_code(code)
-      render :json => create_error("invalid_grant"), :status => 400 and return if !authorization_code
-      render :json => create_error("invalid_grant"), :status => 400 and return if authorization_code.client_id != @client.id
-      render :json => create_error("invalid_grant"), :status => 400 and return if authorization_code.redeemed == true
-      render :json => create_error("invalid_grant"), :status => 400 and return if authorization_code.expires_at.past?
-
-      if authorization_code.redirect_uri
-        redirect_uri = params[:redirect_uri]
-        render :json => create_error("invalid_grant"), :status => 400 and return if !redirect_uri
-
-        begin
-          parsed_redirect_uri = URI::parse(redirect_uri)
-          render :json => create_error("invalid_request"), :status => 400 and return if !parsed_redirect_uri.kind_of?(URI::HTTP)
-          render :json => create_error("invalid_grant"), :status => 400 and return if parsed_redirect_uri != URI::parse(authorization_code.redirect_uri)
-        rescue URI::InvalidURIError => err
-          render :json => create_error("invalid_request"), :status => 400 and return
-        end
+      validate_authorization_code_result = Roper::ValidateAuthorizationCode.call(:client => @client, :code => code, :redirect_uri => redirect_uri)
+      if !validate_authorization_code_result.success?
+        render :json => create_error("invalid_grant"), :status => 400 and return
       end
 
       access_token = Roper::Repository.for(:access_token).new(:client_id => @client.id)
       access_token_result = Roper::GenerateAccessToken.call(:client => @client)
       if access_token_result.success?
-        redeem_authorization_code_result = Roper::RedeemAuthorizationCode.call(:authorization_code => authorization_code)
+        redeem_authorization_code_result = Roper::RedeemAuthorizationCode.call(:code => code)
         if redeem_authorization_code_result.success?
           render :json => {:access_token => access_token_result.access_token.token, :token_type => "Bearer"}, :status => 200 and return
         else

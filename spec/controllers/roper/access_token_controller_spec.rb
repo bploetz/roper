@@ -69,7 +69,7 @@ module Roper
           end
 
           context "client_id found" do
-            it "allows clients with valid basic auth credentials" do
+            it "allows client" do
               authorization_code = FactoryGirl.create(:active_record_authorization_code, :client => client)
               post :token, {:grant_type => "authorization_code", :code => authorization_code.code, :client_id => client.client_id}
               expect(response.code).to eq("200")
@@ -127,42 +127,12 @@ module Roper
       end
 
       context "grant_type=authorization_code" do
-        context "authorization code not found" do
+        context "ValidateAuthorizationCode fails" do
           before :each do
+            failed_result = double("fail")
+            expect(failed_result).to receive(:success?).and_return(false)
+            Roper::ValidateAuthorizationCode.stub(:call).and_return(failed_result)
             post :token, {:grant_type => "authorization_code", :code => "foo"}
-          end
-
-          it "returns a 400 status code" do
-            expect(response.code).to eq("400")
-          end
-
-          it "returns an invalid_grant error response" do
-            expect(response.body).to eq("{\"error\":\"invalid_grant\"}")
-          end
-        end
-
-        context "authorization code not associated with client in the request" do
-          let(:another_client) { FactoryGirl.create(:active_record_client, :client_id => "hi", :client_secret => "hi") }
-          let(:authorization_code) { FactoryGirl.create(:active_record_authorization_code, :client => another_client) }
-
-          before :each do
-            post :token, {:grant_type => "authorization_code", :code => authorization_code.code}
-          end
-
-          it "returns a 400 status code" do
-            expect(response.code).to eq("400")
-          end
-
-          it "returns an invalid_grant error response" do
-            expect(response.body).to eq("{\"error\":\"invalid_grant\"}")
-          end
-        end
-
-        context "authorization code already redeemed" do
-          let(:authorization_code) { FactoryGirl.create(:active_record_authorization_code, :client => client, :redeemed => true) }
-
-          before :each do
-            post :token, {:grant_type => "authorization_code", :code => authorization_code.code}
           end
 
           it "returns a 400 status code" do
@@ -177,72 +147,67 @@ module Roper
         context "authorization code with redirect_uri" do
           let(:authorization_code) { FactoryGirl.create(:active_record_authorization_code, :client => client, :redirect_uri => "http://www.google.com") }
 
-          context "redirect_uri param is missing" do
-            before :each do
-              post :token, {:grant_type => "authorization_code", :code => authorization_code.code}
-            end
-
-            it "returns a 400 status code" do
-              expect(response.code).to eq("400")
-            end
-
-            it "returns an invalid_grant error response" do
-              expect(response.body).to eq("{\"error\":\"invalid_grant\"}")
-            end
+          it "returns a 200 status code" do
+            post :token, {:grant_type => "authorization_code", :code => authorization_code.code, :redirect_uri => authorization_code.redirect_uri}
+            expect(response.code).to eq("200")
           end
 
-          context "redirect_uri param does not match authorization code redirect uri" do
-            before :each do
-              post :token, {:grant_type => "authorization_code", :code => authorization_code.code, :redirect_uri => "http://www.google.com/foo"}
-            end
-
-            it "returns a 400 status code" do
-              expect(response.code).to eq("400")
-            end
-
-            it "returns an invalid_grant error response" do
-              expect(response.body).to eq("{\"error\":\"invalid_grant\"}")
-            end
+          it "returns an access token response" do
+            post :token, {:grant_type => "authorization_code", :code => authorization_code.code, :redirect_uri => authorization_code.redirect_uri}
+            expect(response.body).to match(/{"access_token":"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}","token_type":"Bearer"}/)
           end
 
-          context "redirect_uri param matches authorization code redirect uri" do
-            before :each do
-              post :token, {:grant_type => "authorization_code", :code => authorization_code.code, :redirect_uri => authorization_code.redirect_uri}
-            end
+          it "generates an access code" do
+            expect(Roper::GenerateAccessToken).to receive(:call).and_call_original
+            post :token, {:grant_type => "authorization_code", :code => authorization_code.code, :redirect_uri => authorization_code.redirect_uri}
+          end
 
-            it "returns a 200 status code" do
-              expect(response.code).to eq("200")
-            end
-
-            it "returns an access token response" do
-              expect(response.body).to match(/{"access_token":"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}","token_type":"Bearer"}/)
-            end
-
-            it "sets the authorization code as redeemed" do
-              updated_authorization_code = Roper::Repository.for(:authorization_code).find_by_code(authorization_code.code)
-              expect(updated_authorization_code.redeemed).to eq(true)
-            end
+          it "redeems the authorization code" do
+            expect(Roper::RedeemAuthorizationCode).to receive(:call).and_call_original
+            post :token, {:grant_type => "authorization_code", :code => authorization_code.code, :redirect_uri => authorization_code.redirect_uri}
           end
         end
 
         context "authorization code without redirect_uri" do
           let(:authorization_code) { FactoryGirl.create(:active_record_authorization_code, :client => client) }
 
-          before :each do
-            post :token, {:grant_type => "authorization_code", :code => authorization_code.code}
-          end
-
           it "returns a 200 status code" do
+            post :token, {:grant_type => "authorization_code", :code => authorization_code.code}
             expect(response.code).to eq("200")
           end
 
           it "returns an access token response" do
+            post :token, {:grant_type => "authorization_code", :code => authorization_code.code}
             expect(response.body).to match(/{"access_token":"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}","token_type":"Bearer"}/)
           end
 
-          it "sets the authorization code as redeemed" do
-            updated_authorization_code = Roper::Repository.for(:authorization_code).find_by_code(authorization_code.code)
-            expect(updated_authorization_code.redeemed).to eq(true)
+          it "generates an access code" do
+            expect(Roper::GenerateAccessToken).to receive(:call).and_call_original
+            post :token, {:grant_type => "authorization_code", :code => authorization_code.code, :redirect_uri => authorization_code.redirect_uri}
+          end
+
+          it "redeems the authorization code" do
+            expect(Roper::RedeemAuthorizationCode).to receive(:call).and_call_original
+            post :token, {:grant_type => "authorization_code", :code => authorization_code.code, :redirect_uri => authorization_code.redirect_uri}
+          end
+        end
+
+        context "RedeemAuthorizationCode fails" do
+          let(:authorization_code) { FactoryGirl.create(:active_record_authorization_code, :client => client) }
+
+          before :each do
+            failed_result = double("fail")
+            expect(failed_result).to receive(:success?).and_return(false)
+            Roper::RedeemAuthorizationCode.stub(:call).and_return(failed_result)
+            post :token, {:grant_type => "authorization_code", :code => authorization_code.code}
+          end
+
+          it "returns a 500 status code" do
+            expect(response.code).to eq("500")
+          end
+
+          it "returns an unexpected error response" do
+            expect(response.body).to eq("{\"message\":\"unexpected error\"}")
           end
         end
       end
