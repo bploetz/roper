@@ -58,6 +58,7 @@ module Roper
       render :json => create_error("invalid_grant"), :status => 400 and return if !authorization_code
       render :json => create_error("invalid_grant"), :status => 400 and return if authorization_code.client_id != @client.id
       render :json => create_error("invalid_grant"), :status => 400 and return if authorization_code.redeemed == true
+      render :json => create_error("invalid_grant"), :status => 400 and return if authorization_code.expires_at.past?
 
       if authorization_code.redirect_uri
         redirect_uri = params[:redirect_uri]
