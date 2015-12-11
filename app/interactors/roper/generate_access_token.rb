@@ -1,6 +1,8 @@
+require 'interactor'
+
 module Roper
-  class GeneratAccessToken
-    include Interactor
+  class GenerateAccessToken
+    include ::Interactor
 
     def call
       access_token = Roper::Repository.for(:access_token).new(:client_id => context.client.id)

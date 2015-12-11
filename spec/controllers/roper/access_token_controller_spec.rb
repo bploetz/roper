@@ -158,6 +158,22 @@ module Roper
           end
         end
 
+        context "authorization code already redeemed" do
+          let(:authorization_code) { FactoryGirl.create(:active_record_authorization_code, :client => client, :redeemed => true) }
+
+          before :each do
+            post :token, {:grant_type => "authorization_code", :code => authorization_code.code}
+          end
+
+          it "returns a 400 status code" do
+            expect(response.code).to eq("400")
+          end
+
+          it "returns an invalid_grant error response" do
+            expect(response.body).to eq("{\"error\":\"invalid_grant\"}")
+          end
+        end
+
         context "authorization code with redirect_uri" do
           let(:authorization_code) { FactoryGirl.create(:active_record_authorization_code, :client => client, :redirect_uri => "http://www.google.com") }
 

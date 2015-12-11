@@ -57,6 +57,7 @@ module Roper
       authorization_code = Roper::Repository.for(:authorization_code).find_by_code(code)
       render :json => create_error("invalid_grant"), :status => 400 and return if !authorization_code
       render :json => create_error("invalid_grant"), :status => 400 and return if authorization_code.client_id != @client.id
+      render :json => create_error("invalid_grant"), :status => 400 and return if authorization_code.redeemed == true
 
       if authorization_code.redirect_uri
         redirect_uri = params[:redirect_uri]
@@ -72,10 +73,11 @@ module Roper
       end
 
       access_token = Roper::Repository.for(:access_token).new(:client_id => @client.id)
-      if access_token.save
-        authorization_code.redeemed = true
-        if authorization_code.save
-          render :json => {:access_token => access_token.token, :token_type => "Bearer"}, :status => 200 and return
+      access_token_result = Roper::GenerateAccessToken.call(:client => @client)
+      if access_token_result.success?
+        redeem_authorization_code_result = Roper::RedeemAuthorizationCode.call(:authorization_code => authorization_code)
+        if redeem_authorization_code_result.success?
+          render :json => {:access_token => access_token_result.access_token.token, :token_type => "Bearer"}, :status => 200 and return
         else
           render :json => {:message => "unexpected error"}, :status => 500 and return
         end
