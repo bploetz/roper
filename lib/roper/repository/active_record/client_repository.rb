@@ -11,7 +11,7 @@ module Roper
       def new(attributes = {})
         instance = model_class.new(attributes)
         instance.client_id = UUIDTools::UUID.random_create.to_s
-        instance.client_secret = Digest::SHA1.hexdigest(UUIDTools::UUID.random_create.to_s)
+        instance.client_secret = UUIDTools::UUID.random_create.to_s
         instance
       end
 
