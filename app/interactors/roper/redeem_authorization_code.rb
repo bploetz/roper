@@ -5,10 +5,11 @@ module Roper
     include ::Interactor
 
     def call
-      authorization_code = Roper::Repository.for(:authorization_code).find_by_code(context.code)
+      repository = Roper::Repository.for(:authorization_code)
+      authorization_code = repository.find_by_code(context.code)
       context.fail! if !authorization_code
       authorization_code.redeemed = true
-      if !authorization_code.save
+      if !repository.save(authorization_code)
         context.fail!
       end
     end

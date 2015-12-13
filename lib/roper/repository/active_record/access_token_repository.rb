@@ -11,8 +11,7 @@ module Roper
       end
 
       def save(object)
-        object.save
-        return object
+        return object.save
       end
 
       def find_by_token(token)
