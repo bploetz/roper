@@ -16,11 +16,15 @@ module Roper
           access_token = Roper::Repository.for(:access_token).model_class.first
           expect(access_token).not_to eq(nil)
           expect(access_token.client_id).to eq(client.id)
+          expect(access_token.token).to match(/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/)
+          expect(access_token.refresh_token).to eq(nil)
           expect(access_token.expires_at).not_to eq(nil)
         end
 
-        it "sets the created access token on the context" do
-          expect(context.access_token.client_id).to eq(client.id)
+        it "sets the access token hash on the context" do
+          context
+          access_token = Roper::Repository.for(:access_token).model_class.first
+          expect(context.access_token_hash).to include({:access_token => access_token.token, :token_type => "Bearer", :expires_in => Roper.access_token_expiration_time})
         end
       end
 
@@ -31,12 +35,40 @@ module Roper
           context
           access_token = Roper::Repository.for(:access_token).model_class.first
           expect(access_token).not_to eq(nil)
-          expect(access_token.client_id).to eq(client.id)
           expect(access_token.expires_at).to eq(nil)
+          Roper.access_token_expiration_time = previous_value
+        end
+
+        it "does not include expires_in in the access token hash" do
+          previous_value = Roper.access_token_expiration_time
+          Roper.access_token_expiration_time = nil
+          context
+          access_token = Roper::Repository.for(:access_token).model_class.first
+          expect(context.access_token_hash).not_to include(:expires_in)
           Roper.access_token_expiration_time = previous_value
         end
       end
 
+      context "when Roper.enable_refresh_tokens is true" do
+        it "sets refresh_token on the access token" do
+          previous_value = Roper.enable_refresh_tokens
+          Roper.enable_refresh_tokens = true
+          context
+          access_token = Roper::Repository.for(:access_token).model_class.first
+          expect(access_token).not_to eq(nil)
+          expect(access_token.refresh_token).to match(/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/)
+          Roper.enable_refresh_tokens = previous_value
+        end
+
+        it "includes refresh_token in the access token hash" do
+          previous_value = Roper.enable_refresh_tokens
+          Roper.enable_refresh_tokens = true
+          context
+          access_token = Roper::Repository.for(:access_token).model_class.first
+          expect(context.access_token_hash).to include({:refresh_token => access_token.refresh_token})
+          Roper.enable_refresh_tokens = previous_value
+        end
+      end
 
       context "when creating the access token fails" do
         let(:stub_access_token) { double("access token") }

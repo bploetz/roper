@@ -9,7 +9,7 @@ FactoryGirl.define do
     "http://www.example.com/#{n}"
   end
 
-  sequence :auth_code do |n|
+  sequence :token do |n|
     "#{n}"
   end
 
@@ -18,7 +18,12 @@ FactoryGirl.define do
   end
 
   factory :active_record_authorization_code, :class => Roper::ActiveRecord::AuthorizationCode do
-    code {FactoryGirl.generate(:auth_code)}
+    code { FactoryGirl.generate(:token) }
     expires_at (DateTime.now + 5.minutes)
+  end
+
+  factory :active_record_access_token, :class => Roper::ActiveRecord::AccessToken do
+    token { FactoryGirl.generate(:token) }
+    refresh_token { FactoryGirl.generate(:token) }
   end
 end

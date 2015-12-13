@@ -12,6 +12,10 @@ module Roper
   mattr_accessor :access_token_expiration_time
   @@access_token_expiration_time = 60
 
+  # Whether to enable the use of refresh tokens or not
+  mattr_accessor :enable_refresh_tokens
+  @@enable_refresh_tokens = false
+
   # The enclosing application's user class. Must be a string.
   mattr_accessor :user_class
   @@user_class = "User"

@@ -14,6 +14,9 @@ module Roper
       when 'authorization_code'
         # https://tools.ietf.org/html/rfc6749#section-4.1.3
         process_authorization_code_grant
+      when 'refresh_token'
+        # https://tools.ietf.org/html/rfc6749#section-6
+        process_refresh_token_grant
       when 'password'
         # https://tools.ietf.org/html/rfc6749#section-4.3
         process_resource_owner_password_credentials_grant
@@ -60,15 +63,32 @@ module Roper
         render :json => create_error("invalid_grant"), :status => 400 and return
       end
 
-      access_token = Roper::Repository.for(:access_token).new(:client_id => @client.id)
       access_token_result = Roper::GenerateAccessToken.call(:client => @client)
       if access_token_result.success?
         redeem_authorization_code_result = Roper::RedeemAuthorizationCode.call(:code => code)
         if redeem_authorization_code_result.success?
-          render :json => {:access_token => access_token_result.access_token.token, :token_type => "Bearer"}, :status => 200 and return
+          render :json => access_token_result.access_token_hash, :status => 200 and return
         else
           render :json => {:message => "unexpected error"}, :status => 500 and return
         end
+      else
+        render :json => {:message => "unexpected error"}, :status => 500 and return
+      end
+    end
+
+    def process_refresh_token_grant
+      refresh_token = params[:refresh_token]
+      render :json => create_error("invalid_request"), :status => 400 and return if !refresh_token
+      scope = params[:scope]
+
+      validate_refresh_token_result = Roper::ValidateRefreshToken.call(:client => @client, :refresh_token => refresh_token)
+      if !validate_refresh_token_result.success?
+        render :json => create_error("invalid_grant"), :status => 400 and return
+      end
+
+      access_token_result = Roper::GenerateAccessToken.call(:client => @client)
+      if access_token_result.success?
+        render :json => access_token_result.access_token_hash, :status => 200 and return
       else
         render :json => {:message => "unexpected error"}, :status => 500 and return
       end

@@ -7,7 +7,6 @@ module Roper
 
       def new(attributes = {})
         instance = model_class.new(attributes)
-        instance.token = UUIDTools::UUID.random_create.to_s
         instance
       end
 
@@ -18,6 +17,10 @@ module Roper
 
       def find_by_token(token)
         model_class.find_by(:token => token)
+      end
+
+      def find_by_refresh_token(refresh_token)
+        model_class.find_by(:refresh_token => refresh_token)
       end
     end
   end

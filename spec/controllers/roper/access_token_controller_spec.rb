@@ -154,7 +154,7 @@ module Roper
 
           it "returns an access token response" do
             post :token, {:grant_type => "authorization_code", :code => authorization_code.code, :redirect_uri => authorization_code.redirect_uri}
-            expect(response.body).to match(/{"access_token":"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}","token_type":"Bearer"}/)
+            expect(response.body).to match(/{"access_token":"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}","token_type":"Bearer","expires_in":60}/)
           end
 
           it "generates an access code" do
@@ -178,7 +178,7 @@ module Roper
 
           it "returns an access token response" do
             post :token, {:grant_type => "authorization_code", :code => authorization_code.code}
-            expect(response.body).to match(/{"access_token":"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}","token_type":"Bearer"}/)
+            expect(response.body).to match(/{"access_token":"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}","token_type":"Bearer","expires_in":60}/)
           end
 
           it "generates an access code" do
@@ -208,6 +208,44 @@ module Roper
 
           it "returns an unexpected error response" do
             expect(response.body).to eq("{\"message\":\"unexpected error\"}")
+          end
+        end
+      end
+
+      context "grant_type=refresh_token" do
+        context "ValidateRefreshToken fails" do
+          before :each do
+            failed_result = double("fail")
+            expect(failed_result).to receive(:success?).and_return(false)
+            Roper::ValidateRefreshToken.stub(:call).and_return(failed_result)
+            post :token, {:grant_type => "refresh_token", :refresh_token => "foo"}
+          end
+
+          it "returns a 400 status code" do
+            expect(response.code).to eq("400")
+          end
+
+          it "returns an invalid_grant error response" do
+            expect(response.body).to eq("{\"error\":\"invalid_grant\"}")
+          end
+        end
+
+        context "ValidateRefreshToken succeeds" do
+          let(:access_token) { FactoryGirl.create(:active_record_access_token, :client => client) }
+
+          it "returns a 200 status code" do
+            post :token, {:grant_type => "refresh_token", :refresh_token => access_token.refresh_token}
+            expect(response.code).to eq("200")
+          end
+
+          it "returns an access token response" do
+            post :token, {:grant_type => "refresh_token", :refresh_token => access_token.refresh_token}
+            expect(response.body).to match(/{"access_token":"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}","token_type":"Bearer","expires_in":60}/)
+          end
+
+          it "generates an access code" do
+            expect(Roper::GenerateAccessToken).to receive(:call).and_call_original
+            post :token, {:grant_type => "refresh_token", :refresh_token => access_token.refresh_token}
           end
         end
       end
