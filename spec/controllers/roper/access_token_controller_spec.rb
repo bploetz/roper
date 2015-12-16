@@ -231,21 +231,21 @@ module Roper
         end
 
         context "ValidateRefreshToken succeeds" do
-          let(:access_token) { FactoryGirl.create(:active_record_access_token, :client => client) }
+          let(:refresh_token) { FactoryGirl.create(:active_record_refresh_token, :client => client) }
 
           it "returns a 200 status code" do
-            post :token, {:grant_type => "refresh_token", :refresh_token => access_token.refresh_token}
+            post :token, {:grant_type => "refresh_token", :refresh_token => refresh_token.token}
             expect(response.code).to eq("200")
           end
 
           it "returns an access token response" do
-            post :token, {:grant_type => "refresh_token", :refresh_token => access_token.refresh_token}
+            post :token, {:grant_type => "refresh_token", :refresh_token => refresh_token.token}
             expect(response.body).to match(/{"access_token":"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}","token_type":"Bearer","expires_in":60}/)
           end
 
-          it "generates an access code" do
+          it "generates an access token" do
             expect(Roper::GenerateAccessToken).to receive(:call).and_call_original
-            post :token, {:grant_type => "refresh_token", :refresh_token => access_token.refresh_token}
+            post :token, {:grant_type => "refresh_token", :refresh_token => refresh_token.token}
           end
         end
       end

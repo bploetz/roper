@@ -20,6 +20,7 @@ module Roper
         Repository.register(:client, ActiveRecord::ClientRepository.new)
         Repository.register(:authorization_code, ActiveRecord::AuthorizationCodeRepository.new)
         Repository.register(:access_token, ActiveRecord::AccessTokenRepository.new)
+        Repository.register(:refresh_token, ActiveRecord::RefreshTokenRepository.new)
       end
     end
   end

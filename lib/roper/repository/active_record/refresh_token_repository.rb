@@ -1,8 +1,8 @@
 module Roper
   module ActiveRecord
-    class AccessTokenRepository
+    class RefreshTokenRepository
       def model_class
-        ActiveRecord::AccessToken
+        ActiveRecord::RefreshToken
       end
 
       def new(attributes = {})

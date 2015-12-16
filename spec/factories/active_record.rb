@@ -1,16 +1,16 @@
 FactoryGirl.define do
-  factory :active_record_client, :class => Roper::ActiveRecord::Client do
-    client_id "test"
-    client_secret "test"
-    client_name "Test"
-  end
-
   sequence :uri do |n|
     "http://www.example.com/#{n}"
   end
 
   sequence :token do |n|
     "#{n}"
+  end
+
+  factory :active_record_client, :class => Roper::ActiveRecord::Client do
+    client_id "test"
+    client_secret "test"
+    client_name "Test"
   end
 
   factory :active_record_client_redirect_uri, :class => Roper::ActiveRecord::ClientRedirectUri do
@@ -24,6 +24,9 @@ FactoryGirl.define do
 
   factory :active_record_access_token, :class => Roper::ActiveRecord::AccessToken do
     token { FactoryGirl.generate(:token) }
-    refresh_token { FactoryGirl.generate(:token) }
+  end
+
+  factory :active_record_refresh_token, :class => Roper::ActiveRecord::RefreshToken do
+    token { FactoryGirl.generate(:token) }
   end
 end
