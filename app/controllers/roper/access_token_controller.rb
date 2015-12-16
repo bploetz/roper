@@ -39,7 +39,7 @@ module Roper
     # https://tools.ietf.org/html/rfc6749#section-3.2.1
     def authenticate_client
       auth_header = request.authorization
-      if !auth_header.blank? && auth_header.start_with?("Basic: ")
+      if !auth_header.blank? && auth_header.start_with?("Basic ")
         client_id_client_secret = ActionController::HttpAuthentication::Basic::user_name_and_password(request)
         @client = Roper::Repository.for(:client).find_by_client_id(client_id_client_secret[0])
         # https://tools.ietf.org/html/rfc6749#section-5.2

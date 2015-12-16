@@ -10,7 +10,7 @@ module Roper
       context "basic authentication" do
         context "invalid client_id" do
           before :each do
-            @request.env["HTTP_AUTHORIZATION"] = "Basic: #{::Base64.strict_encode64("foo:bar")}"
+            @request.env["HTTP_AUTHORIZATION"] = "Basic #{::Base64.strict_encode64("foo:bar")}"
             post :token, {}
           end
 
@@ -25,7 +25,7 @@ module Roper
 
         context "client_secret doesn't match" do
           before :each do
-            @request.env["HTTP_AUTHORIZATION"] = "Basic: #{::Base64.strict_encode64("test:bar")}"
+            @request.env["HTTP_AUTHORIZATION"] = "Basic #{::Base64.strict_encode64("test:bar")}"
             post :token, {}
           end
 
@@ -44,7 +44,7 @@ module Roper
 
         it "allows clients with valid basic auth credentials" do
           authorization_code = FactoryGirl.create(:active_record_authorization_code, :client => client)
-          @request.env["HTTP_AUTHORIZATION"] = "Basic: #{::Base64.strict_encode64("test:test")}"
+          @request.env["HTTP_AUTHORIZATION"] = "Basic #{::Base64.strict_encode64("test:test")}"
           post :token, {:grant_type => "authorization_code", :code => authorization_code.code}
           expect(response.code).to eq("200")
         end
@@ -95,7 +95,7 @@ module Roper
 
     describe "POST /oauth/token" do
       before :each do
-        @request.env["HTTP_AUTHORIZATION"] = "Basic: #{::Base64.strict_encode64("test:test")}"
+        @request.env["HTTP_AUTHORIZATION"] = "Basic #{::Base64.strict_encode64("test:test")}"
       end
 
       context "grant_type parameter is missing" do
