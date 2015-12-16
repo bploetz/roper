@@ -2,6 +2,8 @@ require_dependency "roper/application_controller"
 
 module Roper
   class AccessTokenController < ApplicationController
+    skip_before_filter :verify_authenticity_token
+
     before_action :authenticate_client
 
     # POST /token
