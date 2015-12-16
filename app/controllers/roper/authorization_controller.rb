@@ -25,8 +25,9 @@ module Roper
     end
 
     def approve_authorization
+      # TODO: Move this to a GenerateAuthorizationCode interactor
       auth_code_repo = Roper::Repository.for(:authorization_code)
-      @authorization_code = auth_code_repo.new(:client_id => @client_id,
+      @authorization_code = auth_code_repo.new(:client_id => @client.id,
                                                :redirect_uri => @request_redirect_uri,
                                                :expires_at => 5.minutes.from_now)
       auth_code_repo.save(@authorization_code)
