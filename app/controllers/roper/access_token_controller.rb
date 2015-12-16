@@ -62,6 +62,7 @@ module Roper
 
       validate_authorization_code_result = Roper::ValidateAuthorizationCode.call(:client => @client, :code => code, :redirect_uri => redirect_uri)
       if !validate_authorization_code_result.success?
+        Rails.logger.debug "authorization code validation failed: #{validate_authorization_code_result.message}"
         render :json => create_error("invalid_grant"), :status => 400 and return
       end
 

@@ -131,6 +131,7 @@ module Roper
           before :each do
             failed_result = double("fail")
             expect(failed_result).to receive(:success?).and_return(false)
+            allow(failed_result).to receive(:message)
             Roper::ValidateAuthorizationCode.stub(:call).and_return(failed_result)
             post :token, {:grant_type => "authorization_code", :code => "foo"}
           end
