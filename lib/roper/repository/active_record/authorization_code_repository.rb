@@ -10,7 +10,6 @@ module Roper
 
       def new(attributes = {})
         instance = model_class.new(attributes)
-        instance.code = Digest::SHA1.hexdigest(UUIDTools::UUID.random_create.to_s)
         instance
       end
 

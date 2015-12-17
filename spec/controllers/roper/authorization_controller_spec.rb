@@ -224,6 +224,24 @@ module Roper
         post :approve_authorization, {:client_id => client_with_redirect.client_id, :redirect_uri => client_with_redirect.client_redirect_uris[0].uri, :state => "foo"}
         expect(response).to redirect_to("http://www.foo.com?code=abc123&state=foo")
       end
+
+      context "GenerateAuthorizationCode.call fails" do
+        before :each do
+          failure = double("failure")
+          expect(failure).to receive(:success?).and_return(false)
+          expect(Roper::GenerateAuthorizationCode).to receive(:call).and_return(failure)
+        end
+
+        it "returns a 500 status code" do
+          post :approve_authorization, {:client_id => client_with_redirect.client_id}
+          expect(response.code).to eq("500")
+        end
+
+        it "returns an error response" do
+          post :approve_authorization, {:client_id => client_with_redirect.client_id}
+          expect(response.body).to eq("{\"message\":\"unexpected error\"}")
+        end
+      end
     end
   end
 end
