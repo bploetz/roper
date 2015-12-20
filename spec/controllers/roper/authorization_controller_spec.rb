@@ -33,19 +33,38 @@ module Roper
         end
 
         context "client_id parameter is missing" do
-          it "returns a 400 status code" do
-            get :authorize, {:response_type => "code", :redirect_uri => "http://www.foo.com"}
-            expect(response.code).to eq("400")
+          context "response_type=code" do
+            it "returns a 400 status code" do
+              get :authorize, {:response_type => "code", :redirect_uri => "http://www.foo.com"}
+              expect(response.code).to eq("400")
+            end
+
+            it "returns an invalid_request error response" do
+              get :authorize, {:response_type => "code", :redirect_uri => "http://www.foo.com"}
+              expect(response.body).to eq("{\"error\":\"invalid_request\",\"error_description\":\"client_id is required\"}")
+            end
+
+            it "includes state in the error if sent in the request" do
+              get :authorize, {:response_type => "code", :redirect_uri => "http://www.foo.com", :state => "foo"}
+              expect(response.body).to eq("{\"error\":\"invalid_request\",\"error_description\":\"client_id is required\",\"state\":\"foo\"}")
+            end
           end
 
-          it "returns an invalid_request error response" do
-            get :authorize, {:response_type => "code", :redirect_uri => "http://www.foo.com"}
-            expect(response.body).to eq("{\"error\":\"invalid_request\",\"error_description\":\"client_id is required\"}")
-          end
+          context "response_type=token" do
+            it "returns a 302 status code" do
+              get :authorize, {:response_type => "token", :redirect_uri => "http://www.foo.com"}
+              expect(response.code).to eq("302")
+            end
 
-          it "includes state in the error if sent in the request" do
-            get :authorize, {:response_type => "code", :redirect_uri => "http://www.foo.com", :state => "foo"}
-            expect(response.body).to eq("{\"error\":\"invalid_request\",\"error_description\":\"client_id is required\",\"state\":\"foo\"}")
+            it "adds an invalid_request error response to the redirect_uri" do
+              get :authorize, {:response_type => "token", :redirect_uri => "http://www.foo.com"}
+              expect(response).to redirect_to("http://www.foo.com#error=invalid_request&error_description=client_id+is+required")
+            end
+
+            it "includes state in the error if sent in the request" do
+              get :authorize, {:response_type => "token", :redirect_uri => "http://www.foo.com", :state => "foo"}
+              expect(response).to redirect_to("http://www.foo.com#error=invalid_request&error_description=client_id+is+required&state=foo")
+            end
           end
         end
 
@@ -57,14 +76,33 @@ module Roper
             end
 
             context "redirect_uri param does not match the configured redirect_uri" do
-              it "returns an invalid_request error response" do
-                get :authorize, {:response_type => "code", :client_id => client_with_redirect.client_id, :redirect_uri => "http://www.google.com"}
-                expect(response.body).to eq("{\"error\":\"invalid_request\",\"error_description\":\"invalid redirect_uri\"}")
+              context "response_type=code" do
+                it "returns an invalid_request error response" do
+                  get :authorize, {:response_type => "code", :client_id => client_with_redirect.client_id, :redirect_uri => "http://www.google.com"}
+                  expect(response.body).to eq("{\"error\":\"invalid_request\",\"error_description\":\"invalid redirect_uri\"}")
+                end
+
+                it "includes state in the error if sent in the request" do
+                  get :authorize, {:response_type => "code", :client_id => client_with_redirect.client_id, :redirect_uri => "http://www.google.com", :state => "foo"}
+                  expect(response.body).to eq("{\"error\":\"invalid_request\",\"error_description\":\"invalid redirect_uri\",\"state\":\"foo\"}")
+                end
               end
 
-              it "includes state in the error if sent in the request" do
-                get :authorize, {:response_type => "code", :client_id => client_with_redirect.client_id, :redirect_uri => "http://www.google.com", :state => "foo"}
-                expect(response.body).to eq("{\"error\":\"invalid_request\",\"error_description\":\"invalid redirect_uri\",\"state\":\"foo\"}")
+              context "response_type=token" do
+                it "returns a 302 status code" do
+                  get :authorize, {:response_type => "token", :client_id => client_with_redirect.client_id, :redirect_uri => "http://www.google.com"}
+                  expect(response.code).to eq("302")
+                end
+
+                it "adds an invalid_request error response to the redirect_uri" do
+                  get :authorize, {:response_type => "token", :client_id => client_with_redirect.client_id, :redirect_uri => "http://www.google.com"}
+                  expect(response).to redirect_to("http://www.google.com#error=invalid_request&error_description=invalid+redirect_uri")
+                end
+
+                it "includes state in the error if sent in the request" do
+                  get :authorize, {:response_type => "token", :client_id => client_with_redirect.client_id, :redirect_uri => "http://www.google.com", :state => "foo"}
+                  expect(response).to redirect_to("http://www.google.com#error=invalid_request&error_description=invalid+redirect_uri&state=foo")
+                end
               end
             end
           end
@@ -89,14 +127,33 @@ module Roper
             end
 
             context "redirect_uri does not match a configured redirect uri" do
-              it "returns an invalid_request error response" do
-                get :authorize, {:response_type => "code", :client_id => client_with_many_redirects.client_id, :redirect_uri => "http://www.google.com"}
-                expect(response.body).to eq("{\"error\":\"invalid_request\",\"error_description\":\"invalid redirect_uri\"}")
+              context "response_type=code" do
+                it "returns an invalid_request error response" do
+                  get :authorize, {:response_type => "code", :client_id => client_with_many_redirects.client_id, :redirect_uri => "http://www.google.com"}
+                  expect(response.body).to eq("{\"error\":\"invalid_request\",\"error_description\":\"invalid redirect_uri\"}")
+                end
+
+                it "includes state in the error if sent in the request" do
+                  get :authorize, {:response_type => "code", :client_id => client_with_many_redirects.client_id, :redirect_uri => "http://www.google.com", :state => "foo"}
+                  expect(response.body).to eq("{\"error\":\"invalid_request\",\"error_description\":\"invalid redirect_uri\",\"state\":\"foo\"}")
+                end
               end
 
-              it "includes state in the error if sent in the request" do
-                get :authorize, {:response_type => "code", :client_id => client_with_many_redirects.client_id, :redirect_uri => "http://www.google.com", :state => "foo"}
-                expect(response.body).to eq("{\"error\":\"invalid_request\",\"error_description\":\"invalid redirect_uri\",\"state\":\"foo\"}")
+              context "response_type=token" do
+                it "returns a 302 status code" do
+                  get :authorize, {:response_type => "token", :client_id => client_with_many_redirects.client_id, :redirect_uri => "http://www.google.com"}
+                  expect(response.code).to eq("302")
+                end
+
+                it "adds an invalid_request error response to the redirect_uri" do
+                  get :authorize, {:response_type => "token", :client_id => client_with_many_redirects.client_id, :redirect_uri => "http://www.google.com"}
+                  expect(response).to redirect_to("http://www.google.com#error=invalid_request&error_description=invalid+redirect_uri")
+                end
+
+                it "includes state in the error if sent in the request" do
+                  get :authorize, {:response_type => "token", :client_id => client_with_many_redirects.client_id, :redirect_uri => "http://www.google.com", :state => "foo"}
+                  expect(response).to redirect_to("http://www.google.com#error=invalid_request&error_description=invalid+redirect_uri&state=foo")
+                end
               end
             end
           end
@@ -203,43 +260,116 @@ module Roper
         controller.stub(:validate_logged_in).and_return(true)
       end
 
-      it "creates an authorization code" do
-        post :approve_authorization, {:client_id => client_with_redirect.client_id}
-        expect(Roper::Repository.for(:authorization_code).model_class.count).to eq(1)
-      end
-
-      it "returns a 302 status code" do
-        post :approve_authorization, {:client_id => client_with_redirect.client_id}
-        expect(response.code).to eq("302")
-      end
-
-      it "redirects to redirect_url" do
-        Roper::ActiveRecord::AuthorizationCode.any_instance.stub(:code).and_return("abc123")
-        post :approve_authorization, {:client_id => client_with_redirect.client_id, :redirect_uri => client_with_redirect.client_redirect_uris[0].uri}
-        expect(response).to redirect_to("http://www.foo.com?code=abc123")
-      end
-
-      it "includes state if present in original request" do
-        Roper::ActiveRecord::AuthorizationCode.any_instance.stub(:code).and_return("abc123")
-        post :approve_authorization, {:client_id => client_with_redirect.client_id, :redirect_uri => client_with_redirect.client_redirect_uris[0].uri, :state => "foo"}
-        expect(response).to redirect_to("http://www.foo.com?code=abc123&state=foo")
-      end
-
-      context "GenerateAuthorizationCode.call fails" do
-        before :each do
-          failure = double("failure")
-          expect(failure).to receive(:success?).and_return(false)
-          expect(Roper::GenerateAuthorizationCode).to receive(:call).and_return(failure)
+      context "response_type=code" do
+        it "creates an authorization code" do
+          post :approve_authorization, {:response_type => "code", :client_id => client_with_redirect.client_id}
+          expect(Roper::Repository.for(:authorization_code).model_class.count).to eq(1)
         end
 
-        it "returns a 500 status code" do
-          post :approve_authorization, {:client_id => client_with_redirect.client_id}
-          expect(response.code).to eq("500")
+        it "returns a 302 status code" do
+          post :approve_authorization, {:response_type => "code", :client_id => client_with_redirect.client_id}
+          expect(response.code).to eq("302")
         end
 
-        it "returns an error response" do
-          post :approve_authorization, {:client_id => client_with_redirect.client_id}
-          expect(response.body).to eq("{\"message\":\"unexpected error\"}")
+        it "redirects to redirect_url" do
+          Roper::ActiveRecord::AuthorizationCode.any_instance.stub(:code).and_return("abc123")
+          post :approve_authorization, {:response_type => "code", :client_id => client_with_redirect.client_id, :redirect_uri => client_with_redirect.client_redirect_uris[0].uri}
+          expect(response).to redirect_to("http://www.foo.com?code=abc123")
+        end
+
+        it "includes state if present in original request" do
+          Roper::ActiveRecord::AuthorizationCode.any_instance.stub(:code).and_return("abc123")
+          post :approve_authorization, {:response_type => "code", :client_id => client_with_redirect.client_id, :redirect_uri => client_with_redirect.client_redirect_uris[0].uri, :state => "foo"}
+          expect(response).to redirect_to("http://www.foo.com?code=abc123&state=foo")
+        end
+
+        context "GenerateAuthorizationCode.call fails" do
+          before :each do
+            failure = double("failure")
+            expect(failure).to receive(:success?).and_return(false)
+            expect(Roper::GenerateAuthorizationCode).to receive(:call).and_return(failure)
+          end
+
+          it "returns a 302 status code" do
+            post :approve_authorization, {:response_type => "code", :client_id => client_with_redirect.client_id, :redirect_uri => client_with_redirect.client_redirect_uris[0].uri}
+            expect(response.code).to eq("302")
+          end
+
+          it "returns an error response" do
+            post :approve_authorization, {:response_type => "code", :client_id => client_with_redirect.client_id, :redirect_uri => client_with_redirect.client_redirect_uris[0].uri}
+            expect(response).to redirect_to("http://www.foo.com?error=server_error")
+          end
+
+          it "includes state if present in original request" do
+            post :approve_authorization, {:response_type => "code", :client_id => client_with_redirect.client_id, :redirect_uri => client_with_redirect.client_redirect_uris[0].uri, :state => "foo"}
+            expect(response).to redirect_to("http://www.foo.com?error=server_error&state=foo")
+          end
+        end
+      end
+
+      context "response_type=token" do
+        it "generates an access token" do
+          expect(Roper::GenerateAccessToken).to receive(:call).and_call_original
+          post :approve_authorization, {:response_type => "token", :client_id => client_with_redirect.client_id}
+        end
+
+        context "access token generation successful" do
+          it "returns a 302 status code" do
+            post :approve_authorization, {:response_type => "code", :client_id => client_with_redirect.client_id}
+            expect(response.code).to eq("302")
+          end
+
+          it "redirects to redirect_url" do
+            post :approve_authorization, {:response_type => "token", :client_id => client_with_redirect.client_id, :redirect_uri => client_with_redirect.client_redirect_uris[0].uri}
+            access_token = Roper::Repository.for(:access_token).model_class.first
+            expect(response).to redirect_to("http://www.foo.com#access_token=#{access_token.token}&expires_in=60&token_type=Bearer")
+          end
+
+          it "includes state if present in original request" do
+            post :approve_authorization, {:response_type => "token", :client_id => client_with_redirect.client_id, :redirect_uri => client_with_redirect.client_redirect_uris[0].uri, :state => "foo"}
+            access_token = Roper::Repository.for(:access_token).model_class.first
+            expect(response).to redirect_to("http://www.foo.com#access_token=#{access_token.token}&expires_in=60&token_type=Bearer&state=foo")
+          end
+        end
+
+        context "access token generation fails" do
+          before :each do
+            failed_response = double("fail")
+            expect(failed_response).to receive(:success?).and_return(false)
+            expect(Roper::GenerateAccessToken).to receive(:call).and_return(failed_response)
+          end
+
+          it "returns a 302 status code" do
+            post :approve_authorization, {:response_type => "token", :client_id => client_with_redirect.client_id}
+            expect(response.code).to eq("302")
+          end
+
+          it "returns an error response" do
+            post :approve_authorization, {:response_type => "token", :client_id => client_with_redirect.client_id, :redirect_uri => client_with_redirect.client_redirect_uris[0].uri}
+            expect(response).to redirect_to("http://www.foo.com#error=server_error")
+          end
+
+          it "includes state if present in original request" do
+            post :approve_authorization, {:response_type => "token", :client_id => client_with_redirect.client_id, :redirect_uri => client_with_redirect.client_redirect_uris[0].uri, :state => "foo"}
+            expect(response).to redirect_to("http://www.foo.com#error=server_error&state=foo")
+          end
+        end
+      end
+
+      context "response_type unsupported" do
+        it "returns a 400 status code" do
+          post :approve_authorization, {:response_type => "foo", :client_id => client_with_redirect.client_id}
+          expect(response.code).to eq("400")
+        end
+
+        it "returns an unsupported_response_type error response" do
+          post :approve_authorization, {:response_type => "foo", :client_id => client_with_redirect.client_id}
+          expect(response.body).to eq("{\"error\":\"unsupported_response_type\"}")
+        end
+
+        it "includes state in the error if sent in the request" do
+          post :approve_authorization, {:response_type => "foo", :client_id => client_with_redirect.client_id, :state => "foo"}
+          expect(response.body).to eq("{\"error\":\"unsupported_response_type\",\"state\":\"foo\"}")
         end
       end
     end
