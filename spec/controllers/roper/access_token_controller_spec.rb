@@ -343,6 +343,45 @@ module Roper
           end
         end
       end
+
+      context "grant_type=client_credentials" do
+        it "generates an access token" do
+          expect(Roper::GenerateAccessToken).to receive(:call).and_call_original
+          post :token, {:grant_type => "client_credentials"}
+        end
+
+        context "access token generation successful" do
+          before :each do
+            expect(Roper::GenerateAccessToken).to receive(:call).and_call_original
+            post :token, {:grant_type => "client_credentials"}
+          end
+
+          it "returns a 200 status code" do
+            expect(response.code).to eq("200")
+          end
+
+          it "returns an access token" do
+            expect(response.body).to match(/{"access_token":"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}","token_type":"Bearer","expires_in":60}/)
+          end
+        end
+
+        context "access token generation fails" do
+          before :each do
+            failed_response = double("fail")
+            expect(failed_response).to receive(:success?).and_return(false)
+            expect(Roper::GenerateAccessToken).to receive(:call).and_return(failed_response)
+            post :token, {:grant_type => "client_credentials"}
+          end
+
+          it "returns a 500 status code" do
+            expect(response.code).to eq("500")
+          end
+
+          it "returns an error response" do
+            expect(response.body).to eq("{\"error\":\"server_error\"}")
+          end
+        end
+      end
     end
   end
 end

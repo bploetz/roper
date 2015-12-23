@@ -116,7 +116,12 @@ module Roper
     end
 
     def process_client_credentials_grant
-      # TODO
+      access_token_result = Roper::GenerateAccessToken.call(:client => @client)
+      if access_token_result.success?
+        render :json => access_token_result.access_token_hash, :status => 200 and return
+      else
+        render :json => create_error("server_error"), :status => 500 and return
+      end
     end
 
     def process_jwt_bearer_grant
