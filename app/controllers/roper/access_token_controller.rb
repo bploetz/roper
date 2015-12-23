@@ -72,10 +72,10 @@ module Roper
         if redeem_authorization_code_result.success?
           render :json => access_token_result.access_token_hash, :status => 200 and return
         else
-          render :json => {:message => "unexpected error"}, :status => 500 and return
+          render :json => create_error("invalid_grant"), :status => 400 and return
         end
       else
-        render :json => {:message => "unexpected error"}, :status => 500 and return
+        render :json => create_error("server_error"), :status => 500 and return
       end
     end
 
@@ -93,7 +93,7 @@ module Roper
       if access_token_result.success?
         render :json => access_token_result.access_token_hash, :status => 200 and return
       else
-        render :json => {:message => "unexpected error"}, :status => 500 and return
+        render :json => create_error("server_error"), :status => 500 and return
       end
     end
 
@@ -108,7 +108,7 @@ module Roper
         if access_token_result.success?
           render :json => access_token_result.access_token_hash, :status => 200 and return
         else
-          render :json => {:message => "unexpected error"}, :status => 500 and return
+          render :json => create_error("server_error"), :status => 500 and return
         end
       else
         render :json => create_error("invalid_grant"), :status => 400 and return

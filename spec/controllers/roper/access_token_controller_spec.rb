@@ -203,12 +203,12 @@ module Roper
             post :token, {:grant_type => "authorization_code", :code => authorization_code.code}
           end
 
-          it "returns a 500 status code" do
-            expect(response.code).to eq("500")
+          it "returns a 400 status code" do
+            expect(response.code).to eq("400")
           end
 
-          it "returns an unexpected error response" do
-            expect(response.body).to eq("{\"message\":\"unexpected error\"}")
+          it "returns an error response" do
+            expect(response.body).to eq("{\"error\":\"invalid_grant\"}")
           end
         end
       end
@@ -323,7 +323,7 @@ module Roper
             end
 
             it "returns an error response" do
-              expect(response.body).to eq("{\"message\":\"unexpected error\"}")
+              expect(response.body).to eq("{\"error\":\"server_error\"}")
             end
           end
         end
