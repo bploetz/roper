@@ -21,7 +21,7 @@ module Roper
 
     context "filters" do
       describe "#validate_logged_in" do
-        it "calls the configured signed_in_+method" do
+        it "calls the configured signed_in_method" do
           expect(controller).to receive(Roper.signed_in_method)
           get :authorize, {:client_id => client.client_id}
         end

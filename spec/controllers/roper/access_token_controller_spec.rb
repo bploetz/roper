@@ -250,6 +250,99 @@ module Roper
           end
         end
       end
+
+      context "grant_type=password" do
+        context "username parameter is missing" do
+          before :each do
+            post :token, {:grant_type => "password"}
+          end
+
+          it "returns a 400 status code" do
+            expect(response.code).to eq("400")
+          end
+
+          it "returns an invalid_request error response" do
+            expect(response.body).to eq("{\"error\":\"invalid_request\",\"error_description\":\"username is required\"}")
+          end
+        end
+
+        context "password parameter is missing" do
+          before :each do
+            post :token, {:grant_type => "password", :username => "foo"}
+          end
+
+          it "returns a 400 status code" do
+            expect(response.code).to eq("400")
+          end
+
+          it "returns an invalid_request error response" do
+            expect(response.body).to eq("{\"error\":\"invalid_request\",\"error_description\":\"password is required\"}")
+          end
+        end
+
+        it "calls the configured authenticate_resource_owner_method" do
+          expect(controller).to receive(Roper.authenticate_resource_owner_method).with("foo", "bar").and_return(true)
+          post :token, {:grant_type => "password", :username => "foo", :password => "bar"}
+        end
+
+        context "authenticate_resource_owner_method returns true" do
+          before :each do
+            expect(controller).to receive(Roper.authenticate_resource_owner_method).with("foo", "bar").and_return(true)
+          end
+
+          it "generates an access token" do
+            expect(Roper::GenerateAccessToken).to receive(:call).and_call_original
+            post :token, {:grant_type => "password", :username => "foo", :password => "bar"}
+          end
+
+          context "access token generation successful" do
+            before :each do
+              expect(Roper::GenerateAccessToken).to receive(:call).and_call_original
+              post :token, {:grant_type => "password", :username => "foo", :password => "bar"}
+            end
+
+            it "returns a 200 status code" do
+              expect(response.code).to eq("200")
+            end
+
+            it "returns an access token" do
+              expect(response.body).to match(/{"access_token":"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}","token_type":"Bearer","expires_in":60}/)
+            end
+          end
+
+          context "access token generation fails" do
+            before :each do
+              failed_response = double("fail")
+              expect(failed_response).to receive(:success?).and_return(false)
+              expect(Roper::GenerateAccessToken).to receive(:call).and_return(failed_response)
+              post :token, {:grant_type => "password", :username => "foo", :password => "bar"}
+            end
+
+            it "returns a 500 status code" do
+              expect(response.code).to eq("500")
+            end
+
+            it "returns an error response" do
+              expect(response.body).to eq("{\"message\":\"unexpected error\"}")
+            end
+          end
+        end
+
+        context "authenticate_resource_owner_method returns false" do
+          before :each do
+            expect(controller).to receive(Roper.authenticate_resource_owner_method).with("foo", "bar").and_return(false)
+            post :token, {:grant_type => "password", :username => "foo", :password => "bar"}
+          end
+
+          it "returns a 400 status code" do
+            expect(response.code).to eq("400")
+          end
+
+          it "returns an invalid_request error response" do
+            expect(response.body).to eq("{\"error\":\"invalid_grant\"}")
+          end
+        end
+      end
     end
   end
 end

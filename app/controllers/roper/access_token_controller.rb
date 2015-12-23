@@ -98,7 +98,21 @@ module Roper
     end
 
     def process_resource_owner_password_credentials_grant
-      # TODO
+      username = params[:username]
+      render :json => create_error("invalid_request", "username is required"), :status => 400 and return if !username
+      password = params[:password]
+      render :json => create_error("invalid_request", "password is required"), :status => 400 and return if !password
+
+      if send(Roper.authenticate_resource_owner_method, username, password)
+        access_token_result = Roper::GenerateAccessToken.call(:client => @client)
+        if access_token_result.success?
+          render :json => access_token_result.access_token_hash, :status => 200 and return
+        else
+          render :json => {:message => "unexpected error"}, :status => 500 and return
+        end
+      else
+        render :json => create_error("invalid_grant"), :status => 400 and return
+      end
     end
 
     def process_client_credentials_grant

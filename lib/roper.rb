@@ -32,6 +32,11 @@ module Roper
   mattr_accessor :sign_in_path
   @@sign_in_path = "sign_in_path"
 
+  # The enclosing application's authenticate_resource_owner method to authenticate the resource owner
+  # (used in Resource Owner Password Credentials Grant flow). Must be a symbol.
+  mattr_accessor :authenticate_resource_owner_method
+  @@authenticate_resource_owner_method = :authenticate_resource_owner
+
 
   # Run rails generate roper_install to create
   # a fresh initializer with all configuration values.
