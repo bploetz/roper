@@ -7,6 +7,14 @@ module Roper
     let(:context) { RedeemAuthorizationCode.call(code: authorization_code.code) }
 
     context "#call" do
+      context "authorization_code has already been redeemed" do
+        let(:authorization_code) { FactoryGirl.create(:active_record_authorization_code, :client => client, :redeemed => true) }
+
+        it "fails" do
+          expect(context.success?).to eq(false)
+        end
+      end
+
       context "when updating the authorization_code succeeds" do
         it "succeeds" do
           expect(context.success?).to eq(true)
