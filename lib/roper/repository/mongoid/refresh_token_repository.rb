@@ -1,8 +1,8 @@
 module Roper
-  module ActiveRecord
-    class AuthorizationCodeRepository
+  module Mongoid
+    class RefreshTokenRepository
       def model_class
-        ActiveRecord::AuthorizationCode
+        Mongoid::RefreshToken
       end
 
       def new(attributes = {})
@@ -14,8 +14,8 @@ module Roper
         return object.save
       end
 
-      def find_by_code(code)
-        model_class.find_by(:code => code)
+      def find_by_token(token)
+        model_class.find_by(:token => token)
       end
     end
   end

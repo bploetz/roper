@@ -1,8 +1,8 @@
 module Roper
-  module ActiveRecord
+  module Mongoid
     class AuthorizationCodeRepository
       def model_class
-        ActiveRecord::AuthorizationCode
+        Mongoid::AuthorizationCode
       end
 
       def new(attributes = {})
