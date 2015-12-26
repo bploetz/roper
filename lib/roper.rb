@@ -10,7 +10,7 @@ module Roper
   # Time (in seconds) when access tokens expire.
   # Setting this to nil means access tokens do not expire
   mattr_accessor :access_token_expiration_time
-  @@access_token_expiration_time = 60
+  @@access_token_expiration_time = 900
 
   # Whether to enable the use of refresh tokens or not
   mattr_accessor :enable_refresh_tokens
