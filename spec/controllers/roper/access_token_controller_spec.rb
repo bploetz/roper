@@ -155,7 +155,7 @@ module Roper
 
           it "returns an access token response" do
             post :token, {:grant_type => "authorization_code", :code => authorization_code.code, :redirect_uri => authorization_code.redirect_uri}
-            expect(response.body).to match(/{"access_token":"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}","token_type":"Bearer","expires_in":60}/)
+            expect(response.body).to match(/{"access_token":"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}","token_type":"Bearer","expires_in":900}/)
           end
 
           it "generates an access code" do
@@ -179,7 +179,7 @@ module Roper
 
           it "returns an access token response" do
             post :token, {:grant_type => "authorization_code", :code => authorization_code.code}
-            expect(response.body).to match(/{"access_token":"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}","token_type":"Bearer","expires_in":60}/)
+            expect(response.body).to match(/{"access_token":"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}","token_type":"Bearer","expires_in":900}/)
           end
 
           it "generates an access code" do
@@ -241,7 +241,7 @@ module Roper
 
           it "returns an access token response" do
             post :token, {:grant_type => "refresh_token", :refresh_token => refresh_token.token}
-            expect(response.body).to match(/{"access_token":"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}","token_type":"Bearer","expires_in":60}/)
+            expect(response.body).to match(/{"access_token":"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}","token_type":"Bearer","expires_in":900}/)
           end
 
           it "generates an access token" do
@@ -306,7 +306,7 @@ module Roper
             end
 
             it "returns an access token" do
-              expect(response.body).to match(/{"access_token":"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}","token_type":"Bearer","expires_in":60}/)
+              expect(response.body).to match(/{"access_token":"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}","token_type":"Bearer","expires_in":900}/)
             end
           end
 
@@ -361,7 +361,7 @@ module Roper
           end
 
           it "returns an access token" do
-            expect(response.body).to match(/{"access_token":"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}","token_type":"Bearer","expires_in":60}/)
+            expect(response.body).to match(/{"access_token":"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}","token_type":"Bearer","expires_in":900}/)
           end
         end
 

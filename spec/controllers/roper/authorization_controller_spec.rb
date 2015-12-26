@@ -322,13 +322,13 @@ module Roper
           it "redirects to redirect_url" do
             post :approve_authorization, {:response_type => "token", :client_id => client_with_redirect.client_id, :redirect_uri => client_with_redirect.client_redirect_uris[0].uri}
             access_token = Roper::Repository.for(:access_token).model_class.first
-            expect(response).to redirect_to("http://www.foo.com#access_token=#{access_token.token}&expires_in=60&token_type=Bearer")
+            expect(response).to redirect_to("http://www.foo.com#access_token=#{access_token.token}&expires_in=900&token_type=Bearer")
           end
 
           it "includes state if present in original request" do
             post :approve_authorization, {:response_type => "token", :client_id => client_with_redirect.client_id, :redirect_uri => client_with_redirect.client_redirect_uris[0].uri, :state => "foo"}
             access_token = Roper::Repository.for(:access_token).model_class.first
-            expect(response).to redirect_to("http://www.foo.com#access_token=#{access_token.token}&expires_in=60&token_type=Bearer&state=foo")
+            expect(response).to redirect_to("http://www.foo.com#access_token=#{access_token.token}&expires_in=900&token_type=Bearer&state=foo")
           end
         end
 
