@@ -1,26 +1,25 @@
 require "spec_helper"
 
-describe Roper::ActiveRecord::Client do
-
+describe Roper::Mongoid::Client do
   context "validations" do
-    let(:client) { FactoryGirl.create(:active_record_client) }
+    let(:client) { FactoryGirl.create(:mongoid_client) }
 
     it "validates client_id is unique" do
       client
-      client2 = FactoryGirl.build(:active_record_client)
+      client2 = FactoryGirl.build(:mongoid_client)
       expect(client2.save).to eq(false)
       expect(client2.errors[:client_id]).to eq(["client_id has already been taken"])
     end
 
     it "doesn't allow client_id to be changed after being created" do
-      saved_client = Roper::ActiveRecord::Client.find_by_client_id(client.client_id)
+      saved_client = Roper::Mongoid::Client.find_by(client_id: client.client_id)
       saved_client.client_id = "foo"
       expect(saved_client.save).to eq(false)
       expect(saved_client.errors[:client_id]).to eq(["cannot update client_id"])
     end
 
     it "doesn't allow client_secret to be changed after being created" do
-      saved_client = Roper::ActiveRecord::Client.find_by_client_id(client.client_id)
+      saved_client = Roper::Mongoid::Client.find_by(client_id: client.client_id)
       saved_client.client_secret = "foo"
       expect(saved_client.save).to eq(false)
       expect(saved_client.errors[:client_secret]).to eq(["cannot update client_secret"])
@@ -28,7 +27,7 @@ describe Roper::ActiveRecord::Client do
   end
 
   context "callbacks" do
-    let(:client) { FactoryGirl.create(:active_record_client, :client_secret => "foo") }
+    let(:client) { FactoryGirl.create(:mongoid_client, :client_secret => "foo") }
 
     context "before_save" do
       it "bcrypts the client_secret" do
@@ -40,8 +39,8 @@ describe Roper::ActiveRecord::Client do
 
   context "#valid_redirect_uri?" do
     let(:client) do
-      client = FactoryGirl.build(:active_record_client)
-      client.client_redirect_uris << FactoryGirl.build(:active_record_client_redirect_uri)
+      client = FactoryGirl.build(:mongoid_client)
+      client.client_redirect_uris << FactoryGirl.build(:mongoid_client_redirect_uri)
       client
     end
 

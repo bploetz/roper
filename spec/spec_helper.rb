@@ -5,6 +5,12 @@ SimpleCov.start('rails') do
   add_group "lib", "lib"
 end
 
+require 'mongoid'
+Mongoid.configure do |config|
+  config.connect_to("roper_mongoid_test")
+end
+Mongo::Logger.logger.level = ::Logger::FATAL
+
 require File.expand_path("../dummy/config/environment.rb",  __FILE__)
 require 'rspec/rails'
 require 'factory_girl_rails'
@@ -31,4 +37,8 @@ RSpec.configure do |config|
   config.infer_base_class_for_anonymous_controllers = false
   config.order = "random"
   config.infer_spec_type_from_file_location!
+
+  config.after(:each) do
+    Mongoid.purge!
+  end
 end

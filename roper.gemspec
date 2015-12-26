@@ -18,6 +18,7 @@ Gem::Specification.new do |s|
   s.add_dependency "uuidtools", "~> 2.1"
   s.add_dependency "bcrypt"
   s.add_dependency "interactor", "~> 3.0"
+  s.add_dependency "mongoid", "~> 5"
 
   s.add_development_dependency "sqlite3"
   s.add_development_dependency 'rspec-rails'

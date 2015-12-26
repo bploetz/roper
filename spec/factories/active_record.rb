@@ -1,12 +1,4 @@
 FactoryGirl.define do
-  sequence :uri do |n|
-    "http://www.example.com/#{n}"
-  end
-
-  sequence :token do |n|
-    "#{n}"
-  end
-
   factory :active_record_client, :class => Roper::ActiveRecord::Client do
     client_id "test"
     client_secret "test"
