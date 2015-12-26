@@ -15,7 +15,11 @@ module Roper
       end
 
       def find_by_token(token)
-        model_class.find_by(:token => token)
+        begin
+          model_class.find_by(:token => token)
+        rescue ::Mongoid::Errors::DocumentNotFound => err
+          return nil
+        end
       end
     end
   end

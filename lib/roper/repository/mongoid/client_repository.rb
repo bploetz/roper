@@ -21,7 +21,11 @@ module Roper
       end
 
       def find_by_client_id(client_id)
-        model_class.find_by(:client_id => client_id)
+        begin
+          model_class.find_by(:client_id => client_id)
+        rescue ::Mongoid::Errors::DocumentNotFound => err
+          return nil
+        end
       end
     end
   end

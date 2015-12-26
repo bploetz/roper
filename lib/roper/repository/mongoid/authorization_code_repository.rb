@@ -15,7 +15,11 @@ module Roper
       end
 
       def find_by_code(code)
-        model_class.find_by(:code => code)
+        begin
+          model_class.find_by(:code => code)
+        rescue ::Mongoid::Errors::DocumentNotFound => err
+          return nil
+        end
       end
     end
   end

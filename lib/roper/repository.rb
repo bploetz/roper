@@ -21,6 +21,12 @@ module Roper
         Repository.register(:authorization_code, ActiveRecord::AuthorizationCodeRepository.new)
         Repository.register(:access_token, ActiveRecord::AccessTokenRepository.new)
         Repository.register(:refresh_token, ActiveRecord::RefreshTokenRepository.new)
+      when :mongoid
+        require 'roper/repository/mongoid'
+        Repository.register(:client, Mongoid::ClientRepository.new)
+        Repository.register(:authorization_code, Mongoid::AuthorizationCodeRepository.new)
+        Repository.register(:access_token, Mongoid::AccessTokenRepository.new)
+        Repository.register(:refresh_token, Mongoid::RefreshTokenRepository.new)
       end
     end
   end
