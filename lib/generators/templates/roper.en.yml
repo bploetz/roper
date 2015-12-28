@@ -1,0 +1,8 @@
+en:
+  oauth:
+    scopes:
+      read: "Read your account."
+      write: "Write to your account."
+    authorize:
+      approve: "Approve"
+      deny: "Deny"

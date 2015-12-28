@@ -16,9 +16,9 @@ module Roper
   mattr_accessor :enable_refresh_tokens
   @@enable_refresh_tokens = false
 
-  # The enclosing application's user class. Must be a string.
-  mattr_accessor :user_class
-  @@user_class = "User"
+  # The enclosing application's resource owner class. Must be a string.
+  mattr_accessor :resource_owner_class
+  @@resource_owner_class = "User"
 
   # The enclosing application's current_user method to get the currently signed in user. Must be a symbol.
   mattr_accessor :current_user_method
