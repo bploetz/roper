@@ -4,7 +4,6 @@ PATH
     roper (0.0.1)
       bcrypt
       interactor (~> 3.0)
-      mongoid (~> 5)
       rails (>= 4)
       uuidtools (~> 2.1)
 
@@ -119,6 +118,7 @@ PLATFORMS
 
 DEPENDENCIES
   factory_girl_rails
+  mongoid (~> 5)
   roper!
   rspec-rails
   simplecov
