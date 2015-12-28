@@ -22,6 +22,7 @@ bundle exec rails generate roper:install
 This will copy the following files into your application:
 
 `config/initializers/roper.rb` - Initializer where you configure various features in roper
+
 `config/locales/roper.en.yml` - Locale file used by the [authorization request](https://tools.ietf.org/html/rfc6749#section-4.1.1) view
 
 Mount the roper engine by adding the following to your `config/routes.rb` file:
@@ -58,7 +59,7 @@ Roper relies on the database configuration defined in your application's `config
 
 #### MongoDB
 
-To use MongoDB via via [Mongoid](https://docs.mongodb.org/ecosystem/tutorial/ruby-mongoid-tutorial/#ruby-mongoid-tutorial), set the `orm` configuration value to `:mongoid` in `config/initializers/roper.rb`:
+To use MongoDB via [Mongoid](https://docs.mongodb.org/ecosystem/tutorial/ruby-mongoid-tutorial/#ruby-mongoid-tutorial), set the `orm` configuration value to `:mongoid` in `config/initializers/roper.rb`:
 
 ```ruby
 Roper.configure do |config|
