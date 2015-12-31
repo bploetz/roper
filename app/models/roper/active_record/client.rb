@@ -9,6 +9,7 @@ module Roper
       validate :credentials_changed, :on => :update
 
       has_many :client_redirect_uris
+      has_many :jwt_issuers
 
       before_save :hash_client_secret, if: :client_secret_changed?
 

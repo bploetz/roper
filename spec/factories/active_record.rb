@@ -21,4 +21,13 @@ FactoryGirl.define do
   factory :active_record_refresh_token, :class => Roper::ActiveRecord::RefreshToken do
     token { FactoryGirl.generate(:token) }
   end
+
+  factory :active_record_jwt_issuer, :class => Roper::ActiveRecord::JwtIssuer do
+    issuer { FactoryGirl.generate(:issuer) }
+  end
+
+  factory :active_record_jwt_issuer_key, :class => Roper::ActiveRecord::JwtIssuerKey do
+    algorithm "HS256"
+    hmac_secret "shhhh!"
+  end
 end

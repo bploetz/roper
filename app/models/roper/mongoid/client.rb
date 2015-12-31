@@ -13,8 +13,10 @@ module Roper
       field :client_name, type: String
 
       embeds_many :client_redirect_uris, :class_name => "Roper::Mongoid::ClientRedirectUri"
+      embeds_many :jwt_issuers, :class_name => "Roper::Mongoid::JwtIssuer"
 
       index({client_id: 1}, {unique: true, background: true})
+      index({"jwt_issuers.issuer" => 1}, {unique: true, sparse: true, background: true})
 
       validates_uniqueness_of :client_id, :message => "client_id has already been taken"
       validate :credentials_changed, :on => :update

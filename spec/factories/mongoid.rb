@@ -21,4 +21,13 @@ FactoryGirl.define do
   factory :mongoid_refresh_token, :class => Roper::Mongoid::RefreshToken do
     token { FactoryGirl.generate(:token) }
   end
+
+  factory :mongoid_jwt_issuer, :class => Roper::Mongoid::JwtIssuer do
+    issuer { FactoryGirl.generate(:issuer) }
+  end
+
+  factory :mongoid_jwt_issuer_key, :class => Roper::Mongoid::JwtIssuerKey do
+    algorithm "HS256"
+    hmac_secret "shhhh!"
+  end
 end

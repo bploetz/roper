@@ -338,7 +338,7 @@ module Roper
             expect(response.code).to eq("400")
           end
 
-          it "returns an invalid_request error response" do
+          it "returns an invalid_grant error response" do
             expect(response.body).to eq("{\"error\":\"invalid_grant\"}")
           end
         end
@@ -379,6 +379,240 @@ module Roper
 
           it "returns an error response" do
             expect(response.body).to eq("{\"error\":\"server_error\"}")
+          end
+        end
+      end
+
+      context "grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer" do
+        let(:jwt_issuer) { FactoryGirl.create(:active_record_jwt_issuer, :client => client) }
+        let(:jwt_issuer_key) { FactoryGirl.build(:active_record_jwt_issuer_key, :hmac_secret => hmac_secret) }
+        let(:claims) { {"iss" => jwt_issuer.issuer, "sub" => "abc123", "aud" => "https://api.mycompany.com"} }
+        let(:hmac_secret) { "shhhh!" }
+        let(:hmac_assertion) { JWT.encode claims, hmac_secret, 'HS256'}
+
+        before :each do
+          jwt_issuer.jwt_issuer_keys << jwt_issuer_key
+          jwt_issuer.save
+        end
+
+        context "assertion parameter is missing" do
+          before :each do
+            post :token, {:grant_type => "urn:ietf:params:oauth:grant-type:jwt-bearer"}
+          end
+
+          it "returns a 400 status code" do
+            expect(response.code).to eq("400")
+          end
+
+          it "returns an invalid_request error response" do
+            expect(response.body).to eq("{\"error\":\"invalid_request\",\"error_description\":\"assertion is required\"}")
+          end
+        end
+
+        context "assertion parameter is not a JWT" do
+          before :each do
+            post :token, {:grant_type => "urn:ietf:params:oauth:grant-type:jwt-bearer", :assertion => "foo"}
+          end
+
+          it "returns a 400 status code" do
+            expect(response.code).to eq("400")
+          end
+
+          it "returns an invalid_request error response" do
+            expect(response.body).to eq("{\"error\":\"invalid_request\",\"error_description\":\"invalid JWT assertion\"}")
+          end
+        end
+
+        context "client does not have any JWT issuers configured" do
+          before :each do
+            client.jwt_issuers.clear
+            client.save
+            post :token, {:grant_type => "urn:ietf:params:oauth:grant-type:jwt-bearer", :assertion => hmac_assertion}
+          end
+
+          it "returns a 400 status code" do
+            expect(response.code).to eq("400")
+          end
+
+          it "returns an invalid_request error response" do
+            expect(response.body).to eq("{\"error\":\"invalid_grant\"}")
+          end
+        end
+
+        context "client does not have any JWT issuer keys configured" do
+          before :each do
+            client.jwt_issuers.each {|jwt_issuer| jwt_issuer.jwt_issuer_keys.clear}
+            client.save
+            post :token, {:grant_type => "urn:ietf:params:oauth:grant-type:jwt-bearer", :assertion => hmac_assertion}
+          end
+
+          it "returns a 400 status code" do
+            expect(response.code).to eq("400")
+          end
+
+          it "returns an invalid_request error response" do
+            expect(response.body).to eq("{\"error\":\"invalid_grant\"}")
+          end
+        end
+
+        context "assertion contains an unsupported algorithm for the client" do
+          let(:hmac_assertion) { JWT.encode claims, hmac_secret, 'HS512'}
+
+          before :each do
+            post :token, {:grant_type => "urn:ietf:params:oauth:grant-type:jwt-bearer", :assertion => hmac_assertion}
+          end
+
+          it "returns a 400 status code" do
+            expect(response.code).to eq("400")
+          end
+
+          it "returns an invalid_request error response" do
+            expect(response.body).to eq("{\"error\":\"invalid_grant\"}")
+          end
+        end
+
+        context "assertion contains an unknown issuer" do
+          let(:claims) { {"iss" => "foo", "sub" => "abc123", "aud" => "https://api.mycompany.com"} }
+
+          before :each do
+            post :token, {:grant_type => "urn:ietf:params:oauth:grant-type:jwt-bearer", :assertion => hmac_assertion}
+          end
+
+          it "returns a 400 status code" do
+            expect(response.code).to eq("400")
+          end
+
+          it "returns an invalid_request error response" do
+            expect(response.body).to eq("{\"error\":\"invalid_grant\"}")
+          end
+        end
+
+        context "valid HMAC signed assertion" do
+          context "access token generation succeeds" do
+            before :each do
+              post :token, {:grant_type => "urn:ietf:params:oauth:grant-type:jwt-bearer", :assertion => hmac_assertion}
+            end
+
+            it "returns a 200 status code" do
+              expect(response.code).to eq("200")
+            end
+
+            it "returns an access token" do
+              expect(response.body).to match(/{"access_token":"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}","token_type":"Bearer","expires_in":900}/)
+            end
+          end
+
+          context "access token generation fails" do
+            before :each do
+              failed_response = double("fail")
+              expect(failed_response).to receive(:success?).and_return(false)
+              expect(Roper::GenerateAccessToken).to receive(:call).and_return(failed_response)
+              post :token, {:grant_type => "urn:ietf:params:oauth:grant-type:jwt-bearer", :assertion => hmac_assertion}
+            end
+
+            it "returns a 500 status code" do
+              expect(response.code).to eq("500")
+            end
+
+            it "returns an error response" do
+              expect(response.body).to eq("{\"error\":\"server_error\"}")
+            end
+          end
+        end
+
+        context "valid RSA signed assertion" do
+          let(:rsa_private_key) { OpenSSL::PKey::RSA.generate 2048 }
+          let(:rsa_public_key) { rsa_private_key.public_key }
+          let(:claims) { {"iss" => jwt_issuer.issuer, "sub" => "abc123", "aud" => "https://api.mycompany.com"} }
+          let(:rsa_assertion) { JWT.encode claims, rsa_private_key, 'RS256'}
+
+          before :each do
+            jwt_issuer.jwt_issuer_keys.clear
+            jwt_issuer.jwt_issuer_keys.build(:public_key => rsa_public_key, :algorithm => "RS256")
+            jwt_issuer.save!
+          end
+
+          context "access token generation succeeds" do
+            before :each do
+              post :token, {:grant_type => "urn:ietf:params:oauth:grant-type:jwt-bearer", :assertion => rsa_assertion}
+            end
+
+            it "returns a 200 status code" do
+              expect(response.code).to eq("200")
+            end
+
+            it "returns an access token" do
+              expect(response.body).to match(/{"access_token":"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}","token_type":"Bearer","expires_in":900}/)
+            end
+          end
+
+          context "access token generation fails" do
+            before :each do
+              failed_response = double("fail")
+              expect(failed_response).to receive(:success?).and_return(false)
+              expect(Roper::GenerateAccessToken).to receive(:call).and_return(failed_response)
+              post :token, {:grant_type => "urn:ietf:params:oauth:grant-type:jwt-bearer", :assertion => rsa_assertion}
+            end
+
+            it "returns a 500 status code" do
+              expect(response.code).to eq("500")
+            end
+
+            it "returns an error response" do
+              expect(response.body).to eq("{\"error\":\"server_error\"}")
+            end
+          end
+        end
+
+        context "valid ECDSA signed assertion" do
+          let(:ecdsa_private_key) do
+            ecdsa_key = OpenSSL::PKey::EC.new 'prime256v1'
+            ecdsa_key.generate_key
+            ecdsa_key
+          end
+          let(:ecdsa_public_key) do
+            ecdsa_public_key = OpenSSL::PKey::EC.new ecdsa_private_key
+            ecdsa_public_key.private_key = nil
+            ecdsa_public_key
+          end
+          let(:claims) { {"iss" => jwt_issuer.issuer, "sub" => "abc123", "aud" => "https://api.mycompany.com"} }
+          let(:ecdsa_assertion) { JWT.encode claims, ecdsa_private_key, 'ES256'}
+
+          before :each do
+            jwt_issuer.jwt_issuer_keys.clear
+            jwt_issuer.jwt_issuer_keys.build(:public_key => ecdsa_public_key, :algorithm => "ES256")
+            jwt_issuer.save!
+          end
+
+          context "access token generation succeeds" do
+            before :each do
+              post :token, {:grant_type => "urn:ietf:params:oauth:grant-type:jwt-bearer", :assertion => ecdsa_assertion}
+            end
+
+            it "returns a 200 status code" do
+              expect(response.code).to eq("200")
+            end
+
+            it "returns an access token" do
+              expect(response.body).to match(/{"access_token":"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}","token_type":"Bearer","expires_in":900}/)
+            end
+          end
+
+          context "access token generation fails" do
+            before :each do
+              failed_response = double("fail")
+              expect(failed_response).to receive(:success?).and_return(false)
+              expect(Roper::GenerateAccessToken).to receive(:call).and_return(failed_response)
+              post :token, {:grant_type => "urn:ietf:params:oauth:grant-type:jwt-bearer", :assertion => ecdsa_assertion}
+            end
+
+            it "returns a 500 status code" do
+              expect(response.code).to eq("500")
+            end
+
+            it "returns an error response" do
+              expect(response.body).to eq("{\"error\":\"server_error\"}")
+            end
           end
         end
       end

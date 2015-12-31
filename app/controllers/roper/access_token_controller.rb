@@ -1,5 +1,10 @@
 require_dependency "roper/application_controller"
 
+require 'jwt'
+require 'json'
+require 'openssl'
+require 'time'
+
 module Roper
   class AccessTokenController < ApplicationController
     skip_before_filter :verify_authenticity_token
@@ -125,7 +130,53 @@ module Roper
     end
 
     def process_jwt_bearer_grant
-      # TODO
+      assertion = params[:assertion]
+      render :json => create_error("invalid_request", "assertion is required"), :status => 400 and return if !assertion
+      render :json => create_error("invalid_request", "invalid JWT assertion"), :status => 400 and return if assertion.count(".") != 2
+
+      begin
+        jwt_issuers = @client.jwt_issuers
+        render :json => create_error("invalid_grant"), :status => 400 and return if jwt_issuers.blank?
+        render :json => create_error("invalid_grant"), :status => 400 and return if jwt_issuers.map {|jwt_issuer| jwt_issuer.jwt_issuer_keys}.flatten.blank?
+
+        header = JSON.parse(JWT.base64url_decode(assertion.split(".")[0]))
+        type = header["typ"]
+        render :json => create_error("invalid_request", "invalid JWT header"), :status => 400 and return if type.blank?
+        render :json => create_error("invalid_request", "unsupported typ value"), :status => 400 and return if type != "JWT"
+
+        algorithm = header["alg"]
+        render :json => create_error("invalid_request", "invalid JWT header"), :status => 400 and return if algorithm.blank?
+        accepted_algorithms = jwt_issuers.map {|issuer| issuer.jwt_issuer_keys.map {|issuer_key| issuer_key.algorithm}}.flatten
+        render :json => create_error("invalid_grant"), :status => 400 and return if !accepted_algorithms.include?(algorithm)
+
+        unverified_assertion = JWT.decode(assertion, nil, false) # we'll verify the assertion below
+        payload = unverified_assertion[0]
+        issuer = payload['iss']
+        render :json => create_error("invalid_request", "issuer claims (iss) are required"), :status => 400 and return if issuer.blank?
+
+        matching_issuer = jwt_issuers.find {|jwt_issuer| jwt_issuer.issuer == issuer}
+        render :json => create_error("invalid_grant"), :status => 400 and return if matching_issuer.blank?
+
+        matching_issuer_key = matching_issuer.jwt_issuer_keys.find {|jwt_issuer_key| jwt_issuer_key.algorithm == algorithm}
+        if algorithm =~ /^HS/
+          verified_assertion = JWT.decode(assertion, matching_issuer_key.hmac_secret, true, {:algorithm => algorithm})
+        elsif algorithm =~ /^RS/
+          verified_assertion = JWT.decode(assertion, OpenSSL::PKey::RSA.new(matching_issuer_key.public_key), true, {:algorithm => algorithm})
+        elsif algorithm =~ /^ES/
+          verified_assertion = JWT.decode(assertion, OpenSSL::PKey::EC.new(matching_issuer_key.public_key), true, {:algorithm => algorithm})
+        end
+
+        access_token_result = Roper::GenerateAccessToken.call(:client => @client)
+        if access_token_result.success?
+          render :json => access_token_result.access_token_hash, :status => 200 and return
+        else
+          render :json => create_error("server_error"), :status => 500 and return
+        end
+      rescue JWT::DecodeError
+        render :json => create_error("invalid_request", "invalid JWT assertion"), :status => 400 and return
+      rescue JSON::ParserError => pe
+        render :json => create_error("invalid_request", "invalid JWT assertion"), :status => 400 and return
+      end
     end
   end
 end

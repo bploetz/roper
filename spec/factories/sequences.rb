@@ -6,4 +6,8 @@ FactoryGirl.define do
   sequence :token do |n|
     "#{n}"
   end
+
+  sequence :issuer do |n|
+    "Issuer #{n}"
+  end
 end
