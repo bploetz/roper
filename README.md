@@ -2,7 +2,7 @@
 
 Rails OAuth2 Provider. Implements all protocol flows defined in the [OAuth 2.0 Authorization Framework](https://tools.ietf.org/html/rfc6749), as well as support for the following extension grants:
 
-- [JSON Web Tokens (JWT)](https://tools.ietf.org/html/rfc7523)
+- [JSON Web Tokens (JWT) as authorization grants](https://tools.ietf.org/html/rfc7523)
 
 ## Installation
 
