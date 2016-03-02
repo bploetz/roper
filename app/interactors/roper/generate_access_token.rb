@@ -6,7 +6,7 @@ module Roper
 
     def call
       repository = Roper::Repository.for(:access_token)
-      access_token = repository.new(:client_id => context.client.id, :token => UUIDTools::UUID.random_create.to_s)
+      access_token = repository.new(:client_id => context.client.id, :token => UUIDTools::UUID.random_create.to_s, :principal => context.principal.to_s)
       if Roper.access_token_expiration_time
         access_token.expires_at = Roper.access_token_expiration_time.send(:seconds).from_now
       end

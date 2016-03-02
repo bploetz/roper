@@ -7,6 +7,7 @@ module Roper
       store_in collection: "oauth_access_tokens"
 
       field :token, type: String
+      field :principal, type: String
       field :expires_at, type: DateTime
       field :client_id, type: BSON::ObjectId
 

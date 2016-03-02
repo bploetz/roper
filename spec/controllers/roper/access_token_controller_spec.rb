@@ -5,6 +5,12 @@ module Roper
     routes { Roper::Engine.routes }
 
     let!(:client) { FactoryGirl.create(:active_record_client, :client_id => "test", :client_secret => "test") }
+    let(:current_user) { double("current_user") }
+
+    before :each do
+      allow(current_user).to receive(:id).and_return("abc123")
+      allow(controller).to receive(:current_user).and_return(current_user)
+    end
 
     describe "authenticate_client filter" do
       context "basic authentication" do
@@ -163,6 +169,11 @@ module Roper
             post :token, {:grant_type => "authorization_code", :code => authorization_code.code, :redirect_uri => authorization_code.redirect_uri}
           end
 
+          xit "sets the current user on the access token" do
+            expect(Roper::GenerateAccessToken).to receive(:call).with(hash_including(:principal => "abc123")).and_call_original
+            post :token, {:grant_type => "authorization_code", :code => authorization_code.code, :redirect_uri => authorization_code.redirect_uri}
+          end
+
           it "redeems the authorization code" do
             expect(Roper::RedeemAuthorizationCode).to receive(:call).and_call_original
             post :token, {:grant_type => "authorization_code", :code => authorization_code.code, :redirect_uri => authorization_code.redirect_uri}
@@ -184,6 +195,11 @@ module Roper
 
           it "generates an access code" do
             expect(Roper::GenerateAccessToken).to receive(:call).and_call_original
+            post :token, {:grant_type => "authorization_code", :code => authorization_code.code, :redirect_uri => authorization_code.redirect_uri}
+          end
+
+          xit "sets the current user on the access token" do
+            expect(Roper::GenerateAccessToken).to receive(:call).with(hash_including(:principal => "abc123")).and_call_original
             post :token, {:grant_type => "authorization_code", :code => authorization_code.code, :redirect_uri => authorization_code.redirect_uri}
           end
 
@@ -246,6 +262,11 @@ module Roper
 
           it "generates an access token" do
             expect(Roper::GenerateAccessToken).to receive(:call).and_call_original
+            post :token, {:grant_type => "refresh_token", :refresh_token => refresh_token.token}
+          end
+
+          xit "sets the current user on the access token" do
+            expect(Roper::GenerateAccessToken).to receive(:call).with(hash_including(:principal => "abc123")).and_call_original
             post :token, {:grant_type => "refresh_token", :refresh_token => refresh_token.token}
           end
         end

@@ -20,6 +20,10 @@ Roper.configure do |config|
   # Defaults to :current_user if not specified.
   config.current_user_method = :current_user
 
+  # The method to get the id of the current_user. Must be a symbol.
+  # Defaults to :id if not specified.
+  config.current_user_id_method = :id
+
   # The helper method in the enclosing application to determine if the current user is signed in. Must be a symbol.
   # Defaults to :user_signed_in? if not specified
   config.signed_in_method = :user_signed_in?

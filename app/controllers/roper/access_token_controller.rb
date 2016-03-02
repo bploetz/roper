@@ -71,7 +71,19 @@ module Roper
         render :json => create_error("invalid_grant"), :status => 400 and return
       end
 
-      access_token_result = Roper::GenerateAccessToken.call(:client => @client)
+      ######################
+      # TODO:
+      # Is this right? Should we set the user id on the authorization
+      # code where we've already confirmed the user is logged in? We'd have to also change ValidateAuthorizationCode to set
+      # the auth code object on the context, so we don't have to look it up again here, and also
+      # on the refresh token. We'd also have to change GenerateRefreshToken to set the refresh token on the context
+      # so we can get it and it's user id in process_refresh_token_grant() below.
+      # Then we'd need to figure out what to do in the other process_XXX() methods below. Could be cases where sometimes
+      # we don't set the principal? Or maybe the principal is of different types (i.e. "client" for the client credentials flow)
+      #######################
+      resource_owner = send(Roper.current_user_method)
+      resource_owner_id = resource_owner.send(Roper.current_user_id_method)
+      access_token_result = Roper::GenerateAccessToken.call(:client => @client, :principal => resource_owner_id)
       if access_token_result.success?
         redeem_authorization_code_result = Roper::RedeemAuthorizationCode.call(:code => code)
         if redeem_authorization_code_result.success?
@@ -94,7 +106,13 @@ module Roper
         render :json => create_error("invalid_grant"), :status => 400 and return
       end
 
-      access_token_result = Roper::GenerateAccessToken.call(:client => @client)
+      ################################
+      # TODO:
+      # Is this right? See above
+      ################################
+      resource_owner = send(Roper.current_user_method)
+      resource_owner_id = resource_owner.send(Roper.current_user_id_method)
+      access_token_result = Roper::GenerateAccessToken.call(:client => @client, :principal => resource_owner_id)
       if access_token_result.success?
         render :json => access_token_result.access_token_hash, :status => 200 and return
       else
@@ -109,7 +127,14 @@ module Roper
       render :json => create_error("invalid_request", "password is required"), :status => 400 and return if !password
 
       if send(Roper.authenticate_resource_owner_method, username, password)
-        access_token_result = Roper::GenerateAccessToken.call(:client => @client)
+        ##########################
+        # TODO: 
+        # Is this right? Should we change the authenticate_resource_owner_method to return the user object 
+        # so we can get it's ID in one query to the db instead of two which this will require as currently implemented.
+        ##########################
+        resource_owner = send(Roper.current_user_method)
+        resource_owner_id = resource_owner.send(Roper.current_user_id_method)
+        access_token_result = Roper::GenerateAccessToken.call(:client => @client, :principal => resource_owner_id)
         if access_token_result.success?
           render :json => access_token_result.access_token_hash, :status => 200 and return
         else

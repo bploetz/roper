@@ -11,6 +11,7 @@ module Roper
       field :redeemed, type: Boolean, default: false
       field :expires_at, type: DateTime
       field :client_id, type: BSON::ObjectId
+      field :principal, type: String
 
       index({code: 1}, {unique: true, background: true})
       index({expires_at: 1}, {background: true})

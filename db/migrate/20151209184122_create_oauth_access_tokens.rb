@@ -2,6 +2,7 @@ class CreateOauthAccessTokens < ActiveRecord::Migration
   def change
     create_table :oauth_access_tokens do |t|
       t.string :token, null: false
+      t.string :principal, null: false
       t.datetime :expires_at, null: true
 
       t.timestamps

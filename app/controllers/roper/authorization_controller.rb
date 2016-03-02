@@ -27,7 +27,11 @@ module Roper
     def approve_authorization
       case params[:response_type]
       when 'code'
-        authorization_code_result = Roper::GenerateAuthorizationCode.call(:client => @client, :request_redirect_uri => @request_redirect_uri)
+        current_user = send(Roper.current_user_method)
+        current_user_id = current_user.send(Roper.current_user_id_method)
+        authorization_code_result = Roper::GenerateAuthorizationCode.call(:client => @client,
+                                                                          :request_redirect_uri => @request_redirect_uri,
+                                                                          :principal => current_user_id.to_s)
         if authorization_code_result.success?
           augmented_redirect_uri = "#{params[:redirect_uri]}?code=#{authorization_code_result.authorization_code.code}"
           augmented_redirect_uri << "&state=#{params[:state]}" if @state && !@state.blank?

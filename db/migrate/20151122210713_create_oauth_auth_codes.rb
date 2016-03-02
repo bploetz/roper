@@ -5,6 +5,7 @@ class CreateOauthAuthCodes < ActiveRecord::Migration
       t.string :redirect_uri, null: false
       t.boolean :redeemed, null: false, default: false
       t.datetime :expires_at, null: false
+      t.string :principal, null: false
 
       t.timestamps
     end

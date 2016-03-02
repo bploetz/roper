@@ -24,6 +24,10 @@ module Roper
   mattr_accessor :current_user_method
   @@current_user_method = :current_user
 
+  # The method to get the id of the current_user. Must be a symbol.
+  mattr_accessor :current_user_id_method
+  @@current_user_id_method = :id
+
   # The enclosing application's signed_in? helper method to determine if the current user is signed in. Must be a symbol.
   mattr_accessor :signed_in_method
   @@signed_in_method = :user_signed_in?
